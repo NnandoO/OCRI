@@ -1,0 +1,172 @@
+@import 'tailwindcss';
+@import '../../vendor/livewire/flux/dist/flux.css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
+@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-zinc-50: #fafafa;
+    --color-zinc-100: #f5f5f5;
+    --color-zinc-200: #e5e5e5;
+    --color-zinc-300: #d4d4d4;
+    --color-zinc-400: #a3a3a3;
+    --color-zinc-500: #737373;
+    --color-zinc-600: #525252;
+    --color-zinc-700: #404040;
+    --color-zinc-800: #262626;
+    --color-zinc-900: #171717;
+    --color-zinc-950: #0a0a0a;
+
+    --color-green-100: #c7e5c8;
+    --color-green-200: #a4d5a6;
+    --color-green-300: #80c684;
+    --color-green-400: #68bb6c;
+    --color-green-500: #4cae4f;
+    --color-green-600: #377932;
+    --color-green-700: #2b5c24;
+    --color-green-800: #1e3e16;
+
+    --color-yellow-50: #fff9db; 
+    --color-yellow-100: #fff3c4;
+    --color-yellow-200: #fef08a;
+    --color-yellow-300: #fef08a;
+    --color-yellow-400: #fef08a;
+    --color-yellow-500: #fcd34d;
+    --color-yellow-600: #fbbf24;
+    --color-yellow-700: #f59e0b;
+    --color-yellow-800: #d97706;
+    --color-yellow-900: #b45309;
+    --color-yellow-950: #78350f;
+
+
+    --color-accent: var(--color-yellow-500);
+    --color-accent-content: var(--color-zinc-950);
+    --color-accent-foreground: var(--color-zinc-50);
+}
+
+@layer theme {
+    .dark {
+        --color-accent: var(--color-yellow-600);
+        --color-accent-content: var(--color-zinc-50);
+        --color-accent-foreground: var(--color-neutral-800);
+    }
+}
+
+@layer base {
+
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
+
+[data-flux-field]:not(ui-radio, ui-checkbox) {
+    @apply grid gap-2;
+}
+
+[data-flux-label] {
+    @apply  !mb-0 !leading-tight;
+}
+
+/* Selecciona el Heading de Flux específicamente */
+[data-flux-heading] {
+    color: var(--color-zinc-700);
+}
+
+/* Selecciona el Subheading de Flux específicamente */
+[data-flux-subheading] {
+    color: var(--color-zinc-700);
+}
+
+/* Si quieres que cambien en Modo Oscuro */
+.dark [data-flux-heading] {
+    color: var(--color-zinc-200);
+}
+
+/* Color de fondo del Sidebar */
+[data-flux-sidebar] {
+    background-color: var(--color-green-500); /* Cámbialo por tu color (ej: green-900) */
+    border-inline-end-color: var(--color-green-500); /* El color del borde derecho */
+}
+
+/* Ajuste para el Modo Oscuro */
+.dark [data-flux-sidebar] {
+    background-color: var(--color-green-600);
+    border-inline-end-color: var(--color-green-600);
+}
+input:focus[data-flux-control],
+textarea:focus[data-flux-control],
+select:focus[data-flux-control] {
+    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+}
+
+[data-flux-sidebar-group] div.text-zinc-400 {
+    color: var(--color-zinc-100)/* El color claro que quieres */
+}
+
+[data-flux-main] {
+    background-color: var(--color-zinc-200); 
+}
+
+.dark [data-flux-main] {
+    background-color: var(--color-zinc-600);
+}
+
+[data-flux-sidebar-item] {
+    color: var(--color-zinc-100);
+}
+
+.dark [data-flux-sidebar-item] {
+    color: var(--color-zinc-300);
+}
+
+[data-flux-sidebar] [data-flux-icon] {
+    color: var(--color-zinc-100);
+}
+
+.dark [data-flux-sidebar] [data-flux-icon] {
+    color: var(--color-zinc-300);
+}
+
+[data-current] [data-flux-icon] {
+    color: var(--color-green-900); 
+}
+
+[data-current]{
+    color: var(--color-green-900);
+    font-weight: 600;
+}
+
+/* Color del nombre en el perfil del sidebar (Estado normal) */
+[data-flux-sidebar-profile] span {
+    color: var(--color-zinc-100) !important; /* Pon el color claro que prefieras */
+}
+[data-flux-sidebar] [data-flux-avatar] {
+    background-color: var(--color-zinc-400) !important; /* Tu amarillo de acento */
+    color: var(--color-zinc-950) !important; /* Color de la letra interna */
+}
+
+/* Si quieres un color diferente cuando pasas el mouse por el menú del perfil */
+[data-flux-sidebar-profile]:hover [data-flux-avatar] {
+    background-color: var(--color-zinc-500) !important;
+}
+
+/* Cambia el nombre "Hernando" dentro del menú desplegable */
+[data-flux-menu] [data-flux-heading] {
+    color: var(--color-zinc-900) !important; /* Un color oscuro si el fondo es blanco */
+    font-weight: 700;
+}
+
+/* Cambia el correo electrónico (subtexto) si lo necesitas */
+[data-flux-menu] [data-flux-text] {
+    color: var(--color-zinc-500) !important;
+}
