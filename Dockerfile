@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
     npm && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 2. Instalar extensiones PHP necesarias para Laravel y manipulación de archivos/imágenes
+# 2. Instalar extensiones PHP necesarias para Laravel y manipulación de datos
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
         pdo \
@@ -41,15 +41,15 @@ WORKDIR /var/www/html
 COPY package*.json ./
 COPY composer.json composer.lock ./
 
-# 7. Instalar dependencias frontend y backend (evitando scripts de Artisan que romperían el build)
+# 7. Instalar dependencias frontend y backend (Cero scripts automáticos aquí)
 RUN npm install
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # 8. Copiar TODO el código del proyecto al contenedor
 COPY . .
 
-# 9. Regenerar el autoloader ejecutando ahora sí los scripts de Laravel (ya existe el archivo artisan)
-RUN composer dump-autoload --optimize --no-dev
+# 9. Regenerar el autoloader de Composer sin disparar comandos artisan pesados
+RUN composer dump-autoload --optimize --no-dev --no-scripts
 
 # 10. Compilar los assets frontend (Tailwind, Flux, etc.) para producción con Vite
 RUN npm run build
@@ -58,7 +58,7 @@ RUN npm run build
 # Apuntar la raíz del servidor web a la carpeta pública de Laravel
 RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
 
-# PERMITIR .HTACCESS: Indispensable para que Apache procese las rutas y no bloquee los estilos/assets
+# PERMITIR .HTACCESS: Crucial para que Apache procese las rutas y no bloquee los estilos/assets
 RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
 # 12. Configurar los puertos requeridos por Render
@@ -69,8 +69,5 @@ RUN sed -i 's/80/10000/g' /etc/apache2/ports.conf /etc/apache2/sites-available/0
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache public
 
-# 14. Limpiar cualquier caché local remanente (Blindado para producción)
-# Usamos una base de datos en memoria simulada momentáneamente e ignoramos fallos con || true
-RUN ENV DB_CONNECTION=sqlite DB_DATABASE=:memory: php artisan optimize:clear || true
-
-CMD ["apache2-foreground"]
+# 14. Comando de inicio: Limpia cachés justo al arrancar (Runtime), no en la compilación
+CMD php artisan optimize:clear && apache2-foreground
