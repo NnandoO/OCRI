@@ -1,52 +1,37 @@
-FROM php:8.2-apache
+FROM php:8.3-apache
 
 # Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
     git \
-    unzip \
-    zip \
     curl \
-    libzip-dev \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev
-
-RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
     zip \
-    curl \
-    libzip-dev \
+    unzip \
     libpng-dev \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
+    libzip-dev \
     libonig-dev \
-    libxml2-dev
+    libxml2-dev \
+    nodejs \
+    npm \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
+        pdo \
+        pdo_mysql \
+        mbstring \
+        exif \
+        pcntl \
+        bcmath \
+        gd \
+        zip
 
-RUN docker-php-ext-configure gd \
-    --with-freetype \
-    --with-jpeg
-
-RUN docker-php-ext-install \
-    gd \
-    pdo \
-    pdo_mysql \
-    mbstring \
-    zip \
-    exif \
-    pcntl
-
-# Habilitar rewrite Apache
+# Habilitar mod_rewrite de Apache
 RUN a2enmod rewrite
-
-# Instalar Node.js 22
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs
 
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Directorio de trabajo
+# Directorio del proyecto
 WORKDIR /var/www/html
 
 # Copiar archivos
@@ -55,21 +40,25 @@ COPY . .
 # Instalar dependencias PHP
 RUN composer install --no-dev --optimize-autoloader
 
-# Instalar dependencias Node
+# Instalar dependencias frontend
 RUN npm install
 
-# Compilar assets Vite
+# Compilar assets
 RUN npm run build
 
-# Configuración Laravel
-RUN cp .env.example .env
+# Permisos Laravel
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 storage bootstrap/cache
 
-RUN php artisan key:generate
+# Configuración Apache para Laravel
+RUN sed -i 's!/var/www/html!/var/www/html/public!g' \
+    /etc/apache2/sites-available/000-default.conf
 
-# Permisos
-RUN chown -R www-data:www-data storage bootstrap/cache
+# Puerto Render
+EXPOSE 10000
 
-# Apache config
-COPY apache.conf /etc/apache2/sites-available/000-default.conf
+# Apache escuchando en Render
+RUN sed -i 's/80/10000/g' /etc/apache2/ports.conf \
+    /etc/apache2/sites-available/000-default.conf
 
-EXPOSE 80
+CMD ["apache2-foreground"]
