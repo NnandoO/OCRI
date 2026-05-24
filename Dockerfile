@@ -1,6 +1,6 @@
 FROM php:8.3-apache
 
-# Instalar dependencias del sistema
+# 1. Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -13,9 +13,10 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     nodejs \
-    npm
+    npm && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Instalar extensiones PHP
+# 2. Instalar extensiones PHP
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
         pdo \
@@ -27,50 +28,45 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         gd \
         zip
 
-# Habilitar mod_rewrite
+# 3. Habilitar mod_rewrite para Laravel
 RUN a2enmod rewrite
 
-# Instalar Composer
+# 4. Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Directorio Laravel
+# 5. Configurar directorio de trabajo
 WORKDIR /var/www/html
 
-# Copiar package primero (mejor cache)
+# 6. Copiar archivos de dependencias (Aprovecha la caché de capas)
 COPY package*.json ./
-
-# Instalar dependencias frontend
-RUN npm install
-
-# Copiar composer
 COPY composer.json composer.lock ./
 
-# Instalar dependencias PHP
+# 7. Instalar dependencias backend y frontend
+RUN npm install
 RUN composer install --no-dev --optimize-autoloader
 
-# Copiar TODO el proyecto
+# 8. Copiar TODO el resto del proyecto
 COPY . .
 
-# Build Vite para producción
+# 9. Build de Vite para producción (Ahora sí escanea las vistas reales)
 RUN npm run build
 
-# Limpiar caches Laravel
-RUN php artisan optimize:clear
+# 10. Configuración avanzada de Apache para Laravel
+# Apuntar la raíz a public/
+RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
 
-# Permisos
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 storage bootstrap/cache
+# PERMITIR .HTACCESS: Esto evita que Apache ignore las rutas y los assets de Laravel
+RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
-# Apache apuntando a public/
-RUN sed -i 's!/var/www/html!/var/www/html/public!g' \
-    /etc/apache2/sites-available/000-default.conf
-
-# Puerto Render
+# 11. Configurar Puertos para Render
 EXPOSE 10000
+RUN sed -i 's/80/10000/g' /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf
 
-# Apache usando puerto Render
-RUN sed -i 's/80/10000/g' \
-    /etc/apache2/ports.conf \
-    /etc/apache2/sites-available/000-default.conf
+# 12. Permisos correctos para que Apache pueda escribir y leer los assets compilados
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 storage bootstrap/cache public
+
+# 13. Limpiar optimizaciones previas locales
+RUN php artisan optimize:clear
 
 CMD ["apache2-foreground"]
