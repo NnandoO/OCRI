@@ -11,8 +11,24 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev
 
-# Instalar extensiones PHP
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    zip \
+    curl \
+    libzip-dev \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    libonig-dev \
+    libxml2-dev
+
+RUN docker-php-ext-configure gd \
+    --with-freetype \
+    --with-jpeg
+
 RUN docker-php-ext-install \
+    gd \
     pdo \
     pdo_mysql \
     mbstring \
