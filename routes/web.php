@@ -3,6 +3,7 @@
 use App\Http\Controllers\AgreementController;
 use App\Http\Controllers\InstitutionController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ReportController;
 
 // Página de inicio (Login)
 Route::view('/', 'pages.auth.login')->name('home');
@@ -11,24 +12,35 @@ Route::view('/', 'pages.auth.login')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     
     // Dashboard
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', [AgreementController::class, 'dashboard'])->name('dashboard');
 
-    // Módulo de Convenios
     Route::controller(AgreementController::class)->group(function () {
-        Route::get('/agreements', 'index')->name('agreements.index');           // Directorio
-        Route::get('/agreements/create', 'create')->name('agreements.create');   // Formulario
-        Route::post('/agreements', 'store')->name('agreements.store');          // Guardar
-        Route::get('/agreements/process', 'process')->name('agreements.process'); // Mapa de Procesos
+        Route::get('/agreements', 'index')->name('agreements.index');
+        Route::get('/agreements/create', 'create')->name('agreements.create');
+        Route::post('/agreements', 'store')->name('agreements.store');
+        Route::get('/agreements/{agreement}', 'show')->name('agreements.show');
+        
+        // --- RUTAS DE EDICIÓN AÑADIDAS AQUÍ ---
+        Route::get('/agreements/{agreement}/edit', 'edit')->name('agreements.edit');
+        Route::put('/agreements/{agreement}', 'update')->name('agreements.update');
+        // --------------------------------------
+
+        Route::patch('/agreements/{agreement}/status', 'updateStatus')->name('agreements.updateStatus');
+        Route::patch('/agreements/{agreement}/status', 'updateStatus')->name('agreements.update-status');
+        
+        Route::post('/agreements/{agreement}/roadmap', 'storeRoadmap')->name('agreements.roadmap.store');
+        Route::patch('/agreements/roadmap/{itemId}/check', 'checkRoadmapItem')->name('agreements.roadmap.check');
+        
+        Route::delete('/agreements/{agreement}', 'destroy')->name('agreements.destroy');
     });
 
+    Route::patch('/agreements/{agreement}/activate', [AgreementController::class, 'activate'])->name('agreements.activate');
+
     // Módulo de Instituciones
-    Route::get('/institutions', [InstitutionController::class, 'index'])->name('institutions.index');
+    Route::resource('institutions', InstitutionController::class);
 
-    // Reportes e Indicadores
-    Route::get('/reports', function () { 
-        return view('reports.index'); 
-    })->name('reports.index');
-
+    // Reportes e Indicadores (Corregido: Usando solo el controlador para que funcione la búsqueda)
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 });
 
 require __DIR__.'/settings.php';

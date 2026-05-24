@@ -7,7 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Document extends Model
 {
-    protected $fillable = ['agreement_id', 'name', 'file_path'];
+    protected $fillable = [
+        'name', 
+        'file_path', 
+        'extension', 
+        'agreement_id'
+    ];
 
     public function agreement(): BelongsTo
     {

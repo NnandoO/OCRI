@@ -40,15 +40,6 @@
         </flux:sidebar.item>
 
         <flux:sidebar.item 
-            icon="arrow-path-rounded-square" 
-            :href="route('agreements.process')" 
-            :current="request()->routeIs('agreements.process')" 
-            wire:navigate
-        >
-            {{ __('Mapa de Procesos') }}
-        </flux:sidebar.item>
-
-        <flux:sidebar.item 
             icon="building-library" 
             :href="route('institutions.index')" 
             :current="request()->routeIs('institutions.index')" 

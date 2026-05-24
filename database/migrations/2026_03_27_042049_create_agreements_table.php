@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('agreements', function (Blueprint $table) {
     $table->id();
     $table->string('title');
-    $table->string('resolution_number')->unique();
+    $table->string('resolution_number')->nullable()->unique();
     $table->foreignId('institution_id')->constrained()->onDelete('cascade');
     $table->foreignId('agreement_type_id')->constrained();
-    $table->date('start_date');
-    $table->date('end_date');
+    $table->date('start_date')->nullable();
+    $table->date('end_date')->nullable();
     $table->string('status')->default('Vigente'); // Vigente, Por Vencer, Vencido
     $table->timestamps();
 });
