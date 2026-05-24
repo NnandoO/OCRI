@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\URL; // <-- ¡ESTA ES LA LÍNEA QUE FALTA AGREGAR!
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,12 +22,13 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-public function boot(): void
-{
-    if (config('app.env') === 'production' || app()->environment('production')) {
-        URL::forceScheme('https');
+    public function boot(): void
+    {
+        if (config('app.env') === 'production' || app()->environment('production')) {
+            URL::forceScheme('https');
+        }
     }
-}
+
     /**
      * Configure default behaviors for production-ready applications.
      */
