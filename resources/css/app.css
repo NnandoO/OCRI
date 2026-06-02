@@ -23,21 +23,21 @@
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
 
-    --color-green-100: #c7e5c8;
-    --color-green-200: #a4d5a6;
-    --color-green-300: #80c684;
-    --color-green-400: #68bb6c;
-    --color-green-500: #4cae4f;
-    --color-green-600: #377932;
-    --color-green-700: #2b5c24;
-    --color-green-800: #1e3e16;
+    --color-green-100: #34d399;
+    --color-green-200: #10b981;
+    --color-green-300: #059669;
+    --color-green-400: #047857;
+    --color-green-500: #045d45;
+    --color-green-600: #034d3a;
+    --color-green-700: #023d2d;
+    --color-green-800: #012d20;
 
     --color-yellow-50: #fff9db; 
     --color-yellow-100: #fff3c4;
     --color-yellow-200: #fef08a;
     --color-yellow-300: #fef08a;
     --color-yellow-400: #fef08a;
-    --color-yellow-500: #fcd34d;
+    --color-yellow-500: #dfa304;
     --color-yellow-600: #fbbf24;
     --color-yellow-700: #f59e0b;
     --color-yellow-800: #d97706;
@@ -45,9 +45,9 @@
     --color-yellow-950: #78350f;
 
 
-    --color-accent: var(--color-yellow-500);
+    --color-accent: var(--color-zinc-100);
     --color-accent-content: var(--color-zinc-950);
-    --color-accent-foreground: var(--color-zinc-50);
+    --color-accent-foreground: var(--color-zinc-500);
 }
 
 @layer theme {
@@ -75,21 +75,36 @@
 
 [data-flux-label] {
     @apply  !mb-0 !leading-tight;
+    color: var(--color-zinc-100);
+}
+
+[data-flux-link] {
+    @apply  !mb-0 !leading-tight;
+    color: var(--color-zinc-100);
+}
+
+[data-flux-icon] {
+    @apply  !mb-0 !leading-tight;
+    color: var(--color-zinc-100);
 }
 
 /* Selecciona el Heading de Flux específicamente */
 [data-flux-heading] {
-    color: var(--color-zinc-700);
+    color: var(--color-zinc-100);
 }
 
 /* Selecciona el Subheading de Flux específicamente */
 [data-flux-subheading] {
-    color: var(--color-zinc-700);
+    color: var(--color-zinc-100);
 }
 
 /* Si quieres que cambien en Modo Oscuro */
 .dark [data-flux-heading] {
-    color: var(--color-zinc-200);
+    color: var(--color-zinc-800);
+}
+
+[data-flux-heading] {
+    color: var(--color-zinc-800);
 }
 
 /* Color de fondo del Sidebar */

@@ -6,7 +6,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <flux:text variant="subheading" class="text-xs font-bold uppercase tracking-wider">Vigentes</flux:text>
-                        <flux:heading size="xl" class="mt-1 text-green-600 dark:text-green-400">{{ $stats['vigentes'] }}</flux:heading>
+                        <flux:heading size="xl" class="mt-1 text-zinc-700 dark:text-green-400">{{ $stats['vigentes'] }}</flux:heading>
                     </div>
                     <flux:icon name="check-badge" variant="outline" class="size-10 text-green-100 dark:text-green-700" />
                 </div>
