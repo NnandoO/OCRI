@@ -80,7 +80,12 @@
 
 [data-flux-label] {
     @apply  !mb-0 !leading-tight;
-    color: var(--color-zinc-900);
+    color: var(--color-zinc-800);
+}
+
+.dark [data-flux-label] {
+    @apply  !mb-0 !leading-tight;
+    color: var(--color-zinc-400);
 }
 
 [data-flux-link] {
@@ -88,9 +93,20 @@
     color: var(--color-zinc-100);
 }
 
+.dark [data-flux-link] {
+    @apply  !mb-0 !leading-tight;
+    color: var(--color-zinc-400);
+}
+
+
 [data-flux-icon] {
     @apply  !mb-0 !leading-tight;
     color: var(--color-zinc-800);
+}
+
+.dark [data-flux-icon] {
+    @apply  !mb-0 !leading-tight;
+    color: var(--color-zinc-200);
 }
 
 /* Selecciona el Heading de Flux específicamente */
@@ -100,12 +116,12 @@
 
 /* Selecciona el Subheading de Flux específicamente */
 [data-flux-subheading] {
-    color: var(--color-zinc-900);
+    color: var(--color-zinc-200);
 }
 
 /* Si quieres que cambien en Modo Oscuro */
 .dark [data-flux-heading] {
-    color: var(--color-zinc-800);
+    color: var(--color-zinc-200);
 }
 
 [data-flux-heading] {
@@ -189,4 +205,12 @@ select:focus[data-flux-control] {
 /* Cambia el correo electrónico (subtexto) si lo necesitas */
 [data-flux-menu] [data-flux-text] {
     color: var(--color-zinc-500) !important;
+}
+
+.dark [data-flux-text] {
+    color: var(--color-zinc-200);
+}
+
+.dark [data-flux-card] {
+    background-color: var(--color-zinc-800);
 }

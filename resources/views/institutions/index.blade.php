@@ -22,7 +22,7 @@
             value="{{ request('search') }}" 
             icon="magnifying-glass" 
             placeholder="Nombre o país..." 
-            class="w-48 sm:w-64 bg-white dark:bg-zinc-800" 
+            class="w-48 sm:w-64" 
             clearable 
         />
         <flux:button :href="route('institutions.create')" variant="primary" icon="plus" class="shadow-md" wire:navigate>

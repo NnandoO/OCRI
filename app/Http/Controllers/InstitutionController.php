@@ -28,10 +28,22 @@ public function index(Request $request)
     return view('institutions.index', compact('institutions'));
 }
 
-    public function create()
-    {
-        return view('institutions.create'); // Si vas a crear la vista de registro
-    }
+public function create()
+{
+    // Cargas las instituciones y los tipos como ya lo hacias...
+    $institutions = \App\Models\Institution::all();
+    $types = \App\Models\AgreementType::all();
+    
+    // Y agregas la lista de países para el modal
+    $countries = \App\Models\Institution::select('country')
+        ->distinct()
+        ->whereNotNull('country')
+        ->where('country', '!=', '')
+        ->orderBy('country', 'asc')
+        ->pluck('country');
+
+    return view('agreements.create', compact('institutions', 'types', 'countries'));
+}
     public function store(Request $request)
 {
     $validated = $request->validate([

@@ -9,7 +9,6 @@ class RoadmapItem extends Model
 {
     use HasFactory;
 
-    // ESTA ES LA LÍNEA QUE FALTA:
     protected $fillable = [
         'agreement_id',
         'area_name',
@@ -17,9 +16,14 @@ class RoadmapItem extends Model
         'order'
     ];
 
-    // También es buena idea definir la relación inversa
     public function agreement()
     {
         return $this->belongsTo(Agreement::class);
+    }
+    
+    // 👇 ESTA ES LA FUNCIÓN QUE TE FALTA Y ESTÁ CAUSANDO EL ERROR 👇
+    public function documents()
+    {
+        return $this->hasMany(RoadmapDocument::class);
     }
 }

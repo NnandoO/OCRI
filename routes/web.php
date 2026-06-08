@@ -4,7 +4,11 @@ use App\Http\Controllers\AgreementController;
 use App\Http\Controllers\InstitutionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\AgreementRoadmapController; // Asegúrate de importar el nombre correcto de tu controlador
 
+Route::post('/agreements/roadmap/{item}/upload', [\App\Http\Controllers\AgreementController::class, 'uploadDocument'])->name('agreements.roadmap.upload');
+Route::post('/agreements/{agreement}/consolidate', [\App\Http\Controllers\AgreementController::class, 'consolidateExpedient'])->name('agreements.roadmap.consolidate');
+Route::delete('/agreements/roadmap/document/{document}', [\App\Http\Controllers\AgreementController::class, 'deleteDocument'])->name('agreements.roadmap.delete-doc');
 // Página de inicio (Login)
 Route::view('/', 'pages.auth.login')->name('home');
 

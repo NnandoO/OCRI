@@ -1,6 +1,6 @@
 <x-layouts::app title="Reportes Institucionales">
     {{-- Fondo mejorado para evitar que sea todo negro --}}
-    <div class="min-h-screen bg-zinc-200 dark:bg-zinc-950 p-6 transition-colors duration-300">
+    <div class="min-h-screen bg-zinc-200 dark:bg-zinc-600 p-6 transition-colors duration-300">
         <div class="max-w-full mx-auto space-y-8">
             
             {{-- Header --}}
