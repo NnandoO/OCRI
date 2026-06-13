@@ -12,20 +12,20 @@
         </div>
     </div>
 
-    {{-- Formulario de Búsqueda --}}
-    <form action="{{ route('agreements.index') }}" method="GET" class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-        <flux:input 
-            name="search" 
-            value="{{ request('search') }}" 
-            icon="magnifying-glass" 
-            placeholder="Nombre, resolución o institución..." 
-            class="w-full sm:w-80 shadow-sm dark:bg-zinc-800/40" 
-            clearable
-        />
-        <flux:button :href="route('agreements.create')" variant="primary" icon="plus" class="shadow-lg shadow-blue-500/20" wire:navigate>
-            Nuevo Registro
-        </flux:button>
-    </form>
+{{-- Formulario de Búsqueda en index.blade.php --}}
+<form action="{{ route('agreements.index') }}" method="GET" class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+    <flux:input 
+        name="search" 
+        value="{{ request('search') }}" 
+        icon="magnifying-glass" 
+        placeholder="Nombre, resolución, institución o país..." {{-- 👈 Placeholder actualizado --}}
+        class="w-full sm:w-80 shadow-sm dark:bg-zinc-800/40" 
+        clearable
+    />
+    <flux:button :href="route('agreements.create')" variant="primary" icon="plus" class="shadow-lg shadow-blue-500/20" wire:navigate>
+        Nuevo Registro
+    </flux:button>
+</form>
 </div>
 
         {{-- Tabla de Convenios con fondo más claro --}}

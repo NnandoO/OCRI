@@ -27,7 +27,7 @@
             </flux:button>
         </div>
 
-        {{-- Importante: method="POST" con @method('PUT') para Laravel --}}
+        {{-- Formulario Principal de Actualización --}}
         <form action="{{ route('agreements.update', $agreement) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
             @method('PUT')
@@ -111,51 +111,106 @@
                 </flux:card>
 
                 {{-- Columna: Vigencia --}}
-                <flux:card class="bg-white dark:bg-zinc-800 shadow-sm border-zinc-200 dark:border-zinc-700 p-6">
-                    <div class="flex items-center gap-2 mb-6 border-b border-zinc-100 dark:border-zinc-700 pb-3">
-                        <flux:icon name="calendar" class="size-5 text-zinc-400" />
-                        <flux:heading size="lg">Vigencia y Archivo</flux:heading>
+<flux:card class="bg-white dark:bg-zinc-800 shadow-sm border-zinc-200 dark:border-zinc-700 p-6">
+    <div class="flex items-center gap-2 mb-6 border-b border-zinc-100 dark:border-zinc-700 pb-3">
+        <flux:icon name="calendar" class="size-5 text-zinc-400" />
+        <flux:heading size="lg">Vigencia y Archivo</flux:heading>
+    </div>
+    <div class="space-y-6">
+        <flux:field class="space-y-2">
+            <flux:label class="font-bold text-blue-600 dark:text-blue-400">Subir un nuevo documento (PDF)</flux:label>
+            <flux:input type="file" name="document" id="doc_file" accept=".pdf" class="cursor-pointer dark:bg-zinc-800/50" />
+            
+            {{-- Sistema de acervo digital con BOTÓN DE ELIMINAR CORREGIDO --}}
+            @if($agreement->documents->count() > 0)
+                <div class="mt-4 pt-3 border-t border-zinc-200 dark:border-zinc-700">
+                    <flux:text size="sm" class="font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Archivos guardados actualmente:</flux:text>
+                    <div class="space-y-2">
+                        @foreach($agreement->documents as $doc)
+                            <div class="flex items-center justify-between gap-2 text-sm bg-zinc-50 dark:bg-zinc-800/80 p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <flux:icon name="document-text" class="size-4 text-blue-500 shrink-0" />
+                                    <span class="truncate font-medium text-zinc-700 dark:text-zinc-300" title="{{ $doc->name }}">{{ $doc->name }}</span>
+                                </div>
+                                <div class="flex items-center gap-3 shrink-0 px-2">
+                                    <a href="{{ asset('storage/' . str_replace('\\', '/', $doc->file_path)) }}" target="_blank" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-bold" title="Ver PDF">
+                                        Ver PDF
+                                    </a>
+                                    {{-- AQUÍ ESTÁ LA CORRECCIÓN: window.document.getElementById --}}
+                                    <button type="button" onclick="if(confirm('¿Estás seguro de eliminar este archivo?')) { window.document.getElementById('delete-doc-{{ $doc->id }}').submit(); }" class="text-red-500 hover:text-red-700 transition-colors focus:outline-none" title="Eliminar archivo">
+                                        <flux:icon name="trash" class="size-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
-                    <div class="space-y-6">
-                        <flux:field class="space-y-2">
-                            <flux:label class="font-bold text-blue-600 dark:text-blue-400">Actualizar Acervo Digital (PDF)</flux:label>
-                            <flux:input type="file" name="document" id="doc_file" accept=".pdf" class="cursor-pointer dark:bg-zinc-800/50" />
-                            @if($agreement->document_path)
-                                <flux:text size="xs" class="mt-1">Archivo actual: <a href="{{ Storage::url($agreement->document_path) }}" target="_blank" class="text-blue-500 underline">Ver PDF</a></flux:text>
-                            @endif
-                        </flux:field>
-                        <div class="grid grid-cols-2 gap-4">
-                            <flux:field class="space-y-2">
-                                <flux:label class="font-bold">Fecha Inicio</flux:label>
-                                <flux:input 
-                                    type="date" 
-                                    name="start_date" 
-                                    id="s_date" 
-                                    value="{{ old('start_date', $agreement->start_date?->format('Y-m-d')) }}" 
-                                    class="dark:bg-zinc-800/50" 
-                                />
-                            </flux:field>
-                            <flux:field class="space-y-2">
-                                <flux:label class="font-bold">Fecha Fin</flux:label>
-                                <flux:input 
-                                    type="date" 
-                                    name="end_date" 
-                                    id="e_date" 
-                                    value="{{ old('end_date', $agreement->end_date?->format('Y-m-d')) }}" 
-                                    class="dark:bg-zinc-800/50" 
-                                />
-                            </flux:field>
-                        </div>
-                    </div>
-                </flux:card>
+                </div>
+                
+                {{-- Formularios ocultos para eliminar documentos --}}
+                @foreach($agreement->documents as $doc)
+                    <form id="delete-doc-{{ $doc->id }}" action="{{ route('documents.destroy', $doc->id) }}" method="POST" class="hidden">
+                        @csrf
+                        @method('DELETE')
+                    </form>
+                @endforeach
+            @else
+                <flux:text size="xs" class="mt-1 text-zinc-500">No hay ningún archivo principal en el acervo digital.</flux:text>
+            @endif
+        </flux:field>
+
+        <div class="grid grid-cols-2 gap-4">
+            <flux:field class="space-y-2">
+                <flux:label class="font-bold">Fecha Inicio</flux:label>
+                <flux:input 
+                    type="date" 
+                    name="start_date" 
+                    id="s_date" 
+                    value="{{ old('start_date', $agreement->start_date?->format('Y-m-d')) }}" 
+                    class="dark:bg-zinc-800/50" 
+                />
+            </flux:field>
+            <flux:field class="space-y-2">
+                <flux:label class="font-bold">Fecha Fin</flux:label>
+                <flux:input 
+                    type="date" 
+                    name="end_date" 
+                    id="e_date" 
+                    value="{{ old('end_date', $agreement->end_date?->format('Y-m-d')) }}" 
+                    class="dark:bg-zinc-800/50" 
+                />
+            </flux:field>
+        </div>
+    </div>
+</flux:card>
             </div>
 
-            <div class="flex justify-end gap-4 pt-4 border-t border-zinc-200 dark:border-zinc-700 mt-6">
-                <flux:button :href="route('agreements.index')" variant="ghost">Cancelar</flux:button>
-                <flux:button type="submit" variant="primary" icon="check-badge" class="px-8 py-3 shadow-lg shadow-blue-500/20">
-                    Guardar Cambios
-                </flux:button>
+            {{-- Fila inferior redistribuida con justify-between --}}
+            <div class="flex justify-between items-center pt-4 border-t border-zinc-200 dark:border-zinc-700 mt-6">
+                
+                {{-- Botón de Eliminar (Izquierda - Alerta Destructiva) --}}
+                <flux:button 
+    type="button" 
+    variant="danger" 
+    icon="trash" 
+    onclick="if(confirm('¿Estás completamente seguro de eliminar este convenio permanentemente? Esta acción es irreversible y borrará todo su historial.')) { window.document.getElementById('delete-agreement-form').submit(); }">
+    Eliminar Convenio
+</flux:button>
+
+                {{-- Botones de Control del Formulario (Derecha) --}}
+                <div class="flex gap-4">
+                    <flux:button :href="route('agreements.index')" variant="ghost">Cancelar</flux:button>
+                    <flux:button type="submit" variant="primary" icon="check-badge" class="px-8 py-3 shadow-lg shadow-blue-500/20">
+                        Guardar Cambios
+                    </flux:button>
+                </div>
             </div>
         </form>
+
+        {{-- FORMULARIO DE ELIMINACIÓN OCULTO (Afuera para evitar anidación HTML) --}}
+        <form id="delete-agreement-form" action="{{ route('agreements.destroy', $agreement) }}" method="POST" class="hidden">
+            @csrf
+            @method('DELETE')
+        </form>
+
     </div>
 </x-layouts::app>

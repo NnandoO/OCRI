@@ -7,10 +7,10 @@ use App\Models\Institution;
 use App\Models\AgreementType;
 use App\Models\Document;
 use App\Models\RoadmapItem;
-use App\Models\RoadmapDocument; // NUEVO
+use App\Models\RoadmapDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use setasign\Fpdi\Fpdi; // NUEVO: Para unir los PDFs
+use setasign\Fpdi\Fpdi;
 
 class AgreementController extends Controller
 {
@@ -18,7 +18,7 @@ class AgreementController extends Controller
     {
         $query = Agreement::query()->with('institution');
 
-        // Motor de Búsqueda Global
+        // Motor de Búsqueda Global en AgreementController.php
         if ($request->filled('search')) {
             $term = '%' . trim($request->search) . '%';
             
@@ -27,7 +27,8 @@ class AgreementController extends Controller
                   ->orWhere('name', 'LIKE', $term)              
                   ->orWhere('resolution_number', 'LIKE', $term) 
                   ->orWhereHas('institution', function ($inst) use ($term) {
-                      $inst->where('name', 'LIKE', $term);      
+                      $inst->where('name', 'LIKE', $term)
+                           ->orWhere('country', 'LIKE', $term);
                   });
             });
         }
@@ -55,9 +56,30 @@ class AgreementController extends Controller
             'agreement_type_id' => 'required|exists:agreement_types,id',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
+            'document' => 'nullable|file|mimes:pdf|max:10240',
         ]);
 
-        $agreement->update($validated);
+        $agreement->update([
+            'name' => $validated['name'],
+            'title' => $validated['title'],
+            'resolution_number' => $validated['resolution_number'],
+            'institution_id' => $validated['institution_id'],
+            'agreement_type_id' => $validated['agreement_type_id'],
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'],
+        ]);
+
+        if ($request->hasFile('document')) {
+            $file = $request->file('document');
+            // Todo apunta a resoluciones
+            $path = $file->store('resoluciones', 'public');
+            
+            $agreement->documents()->create([
+                'name' => 'Expediente Consolidado Final',
+                'file_path' => $path,
+                'extension' => $file->getClientOriginalExtension(),
+            ]);
+        }
 
         return redirect()->route('agreements.index')
             ->with('success', 'Convenio actualizado correctamente.');
@@ -75,7 +97,22 @@ class AgreementController extends Controller
             ->orderBy('country', 'asc')
             ->pluck('country');
 
-        return view('agreements.create', compact('institutions', 'types', 'countries'));
+        $currentYear = date('Y');
+        $lastAgreement = \App\Models\Agreement::where('resolution_number', 'LIKE', "%-{$currentYear}")
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($lastAgreement && $lastAgreement->resolution_number) {
+            $parts = explode('-', $lastAgreement->resolution_number);
+            $lastNum = is_numeric($parts[0]) ? (int)$parts[0] : 0;
+            $nextNum = $lastNum + 1;
+        } else {
+            $nextNum = 1;
+        }
+
+        $nextResolutionNumber = str_pad($nextNum, 3, '0', STR_PAD_LEFT) . '-' . $currentYear;
+
+        return view('agreements.create', compact('institutions', 'types', 'countries', 'nextResolutionNumber'));
     }
 
     public function store(Request $request)
@@ -95,13 +132,13 @@ class AgreementController extends Controller
         }
 
         $validated = $request->validate($rules);
-
         $validated['status'] = $request->hasFile('document') ? 'Vigente' : 'En Proceso';
 
         $agreement = Agreement::create($validated);
 
         if ($request->hasFile('document')) {
             $file = $request->file('document');
+            // Todo apunta a resoluciones
             $path = $file->store('resoluciones', 'public');
             
             $agreement->documents()->create([
@@ -109,6 +146,15 @@ class AgreementController extends Controller
                 'file_path' => $path,
                 'extension' => $file->getClientOriginalExtension(),
             ]);
+
+            $defaultAreas = ['Rectorado', 'Vicerrectorado de Investigación', 'Vicerrectorado Académico', 'Asesoría Legal'];
+            foreach ($defaultAreas as $index => $area) {
+                $agreement->roadmapItems()->create([
+                    'area_name' => $area,
+                    'order' => $index,
+                    'is_completed' => true
+                ]);
+            }
         }
 
         return redirect()->route('agreements.index')->with('status', 'Convenio registrado correctamente.');
@@ -121,6 +167,7 @@ class AgreementController extends Controller
             'signature_date' => 'required|date',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
+            'final_document' => 'nullable|file|mimes:pdf|max:10240', // <-- NUEVO: Validar el PDF
         ]);
 
         $agreement = Agreement::findOrFail($id);
@@ -131,6 +178,18 @@ class AgreementController extends Controller
             'end_date' => $data['end_date'],
             'status' => 'Vigente',
         ]);
+
+        // <-- NUEVO: Si se sube el convenio final, lo guardamos en el acervo
+        if ($request->hasFile('final_document')) {
+            $file = $request->file('final_document');
+            $path = $file->store('resoluciones', 'public');
+            
+            $agreement->documents()->create([
+                'name' => 'Convenio Firmado',
+                'file_path' => $path,
+                'extension' => $file->getClientOriginalExtension(),
+            ]);
+        }
 
         return redirect()->route('agreements.show', $agreement->id)
             ->with('status', 'El convenio ahora está oficialmente VIGENTE.');
@@ -212,29 +271,63 @@ class AgreementController extends Controller
     }
 
     // ==========================================
-    // NUEVAS FUNCIONES PARA LOS DOCUMENTOS (PDF)
+    // FUNCIONES PARA LOS DOCUMENTOS (PDF)
     // ==========================================
 
-public function uploadDocument(Request $request, RoadmapItem $item)
+    public function uploadDocument(Request $request, RoadmapItem $item)
     {
-        // 1. Validación manual extra: Previene el error si PHP bloquea el archivo por ser muy pesado
         if (!$request->hasFile('document')) {
             return redirect()->route('agreements.show', $item->agreement_id)
-                ->withErrors(['document' => 'No se recibió el archivo. Es posible que el PDF sea demasiado pesado para el servidor.']);
+                ->withErrors(['document' => 'No se recibió el archivo.']);
         }
 
         $request->validate(['document' => 'required|mimes:pdf|max:10240']); 
         
-        $path = $request->file('document')->store('roadmap_temp');
+        // Todo apunta a resoluciones
+        $path = $request->file('document')->store('resoluciones', 'public');
         
         $item->documents()->create([
             'file_path' => $path,
             'original_name' => $request->file('document')->getClientOriginalName()
         ]);
 
-        // 2. REDIRECCIÓN EXPLÍCITA: En lugar de back(), forzamos a que vuelva al expediente
         return redirect()->route('agreements.show', $item->agreement_id)
                          ->with('status', 'Documento subido correctamente al área.');
+    }
+public function uploadMainDocument(Request $request, Agreement $agreement)
+    {
+        $request->validate([
+            'document' => 'required|mimes:pdf|max:10240',
+        ]);
+
+        if ($request->hasFile('document')) {
+            $file = $request->file('document');
+            // Guardamos directamente en la carpeta resoluciones como todo lo demás
+            $path = $file->store('resoluciones', 'public');
+            
+            $agreement->documents()->create([
+                'name' => 'Convenio Firmado',
+                'file_path' => $path,
+                'extension' => $file->getClientOriginalExtension(),
+            ]);
+        }
+
+        return back()->with('status', 'Documento del convenio subido correctamente.');
+    }
+
+public function destroyMainDocument($id)
+    {
+        $document = \App\Models\Document::findOrFail($id);
+
+        // Borrar archivo físico del almacenamiento público
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($document->file_path)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($document->file_path);
+        }
+
+        // Borrar el registro de la base de datos
+        $document->delete();
+
+        return back()->with('status', 'Archivo eliminado correctamente del acervo.');
     }
 
     public function deleteDocument($id)
@@ -242,75 +335,108 @@ public function uploadDocument(Request $request, RoadmapItem $item)
         $document = RoadmapDocument::findOrFail($id);
         $agreementId = $document->roadmapItem->agreement_id;
 
-        // Eliminar el archivo físico del servidor
-        if (Storage::exists($document->file_path)) {
-            Storage::delete($document->file_path);
+        if (Storage::disk('public')->exists($document->file_path)) {
+            Storage::disk('public')->delete($document->file_path);
         }
 
-        // Eliminar el registro de la base de datos
         $document->delete();
 
         return redirect()->route('agreements.show', $agreementId)
             ->with('status', 'Archivo eliminado correctamente.');
     }
+
     public function consolidateExpedient(Agreement $agreement)
     {
         $pdf = new Fpdi();
         $tempFilesToDelete = [];
 
-        // Obtener todos los documentos ordenados del más reciente al más antiguo
+        // Obtener todos los documentos de las opiniones
         $documents = RoadmapDocument::whereHas('roadmapItem', function($query) use ($agreement) {
             $query->where('agreement_id', $agreement->id);
         })->orderBy('created_at', 'desc')->get();
 
         if ($documents->isEmpty()) {
-            return back()->with('status', 'No hay documentos subidos para consolidar.');
+            return back()->with('status', 'No hay documentos para consolidar.');
         }
 
-        // Unir cada PDF
+        $mergedPages = 0;
+
         foreach ($documents as $doc) {
-            $filePath = storage_path('app/' . $doc->file_path);
+            $filePath = storage_path('app/public/' . $doc->file_path);
             
             if (file_exists($filePath)) {
-                $pageCount = $pdf->setSourceFile($filePath);
-                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                    $templateId = $pdf->importPage($pageNo);
-                    $size = $pdf->getTemplateSize($templateId);
-                    $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-                    $pdf->useTemplate($templateId);
+                
+                // 1. LA MAGIA: Usamos la herramienta que instalaste (gs) para quitarle la compresión al PDF
+                $tempDowngradedPath = storage_path('app/public/temp_' . uniqid() . '.pdf');
+                $cmd = "gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=" . escapeshellarg($tempDowngradedPath) . " " . escapeshellarg($filePath);
+                exec($cmd);
+
+                // 2. Le pasamos el archivo arreglado a FPDI
+                $fileToProcess = file_exists($tempDowngradedPath) ? $tempDowngradedPath : $filePath;
+
+                try {
+                    $pageCount = $pdf->setSourceFile($fileToProcess);
+                    for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                        $templateId = $pdf->importPage($pageNo);
+                        $size = $pdf->getTemplateSize($templateId);
+                        $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                        $pdf->useTemplate($templateId);
+                        $mergedPages++;
+                    }
+                } catch (\Exception $e) {
+                    // Si un archivo está corrupto, lo ignoramos para que no rompa el sistema
                 }
+
+                // 3. Borramos el archivo temporal que usamos para arreglarlo
+                if (file_exists($tempDowngradedPath)) {
+                    unlink($tempDowngradedPath);
+                }
+                
                 $tempFilesToDelete[] = $doc->file_path; 
             }
         }
 
-        // Guardar el PDF consolidado en la carpeta de resoluciones (acceso público)
-        $finalFileName = 'expediente_final_' . $agreement->id . '_' . time() . '.pdf';
-        $finalPath = 'resoluciones/' . $finalFileName;
-        
-        $absolutePath = storage_path('app/public/' . $finalPath);
-        
-        // Asegurarnos de que la carpeta existe
-        if (!file_exists(dirname($absolutePath))) {
-            mkdir(dirname($absolutePath), 0755, true);
+        if ($mergedPages === 0) {
+            return back()->with('status', 'Error: No se pudieron procesar los PDFs.');
         }
 
-        // Crear el archivo físico
-        $pdf->Output($absolutePath, 'F');
+        // 4. Guardamos el PDF unido final en la carpeta resoluciones
+        $finalFileName = 'expediente_opiniones_' . $agreement->id . '_' . time() . '.pdf';
+        $finalPath = 'resoluciones/' . $finalFileName;
+        $pdf->Output(storage_path('app/public/' . $finalPath), 'F');
 
-        // Registrarlo en la tabla de documentos principal del convenio
+        // 5. Lo registramos en la base de datos
         $agreement->documents()->create([
-            'name' => 'Expediente Consolidado Final',
+            'name' => 'Expediente Final (Solo Opiniones)',
             'file_path' => $finalPath,
-            'extension' => 'pdf' // Mantenemos tu estructura
+            'extension' => 'pdf'
         ]);
 
-        // Eliminar archivos físicos temporales
+        // 6. Eliminamos los PDFs sueltos de las opiniones
         foreach($tempFilesToDelete as $tempFile) {
-            Storage::delete($tempFile);
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($tempFile);
         }
-        // Eliminar los registros de la base de datos
         RoadmapDocument::whereIn('file_path', $tempFilesToDelete)->delete();
 
-        return back()->with('status', 'Expediente generado y archivos temporales limpiados con éxito.');
+        return back()->with('status', 'Opiniones unidas y expediente generado con éxito.');
+    }
+
+    public function destroy(Agreement $agreement)
+    {
+        foreach ($agreement->documents as $doc) {
+            if (Storage::disk('public')->exists($doc->file_path)) {
+                Storage::disk('public')->delete($doc->file_path);
+            }
+            $doc->delete();
+        }
+
+        if ($agreement->roadmapItems()) {
+            $agreement->roadmapItems()->delete();
+        }
+
+        $agreement->delete();
+
+        return redirect()->route('agreements.index')
+            ->with('status', 'Convenio y todo su historial eliminados correctamente.');
     }
 }

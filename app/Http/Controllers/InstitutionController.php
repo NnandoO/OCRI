@@ -44,15 +44,38 @@ public function create()
 
     return view('agreements.create', compact('institutions', 'types', 'countries'));
 }
-    public function store(Request $request)
+public function store(Request $request)
 {
+    // 1. Limpiar y pasar a mayúsculas el nombre para una comparación limpia
+    $nameUpper = strtoupper(trim($request->name));
+
+    // 2. INTERCEPCIÓN AJAX: Si ya existe en la BD, la recuperamos y se la devolvemos al modal
+    if ($request->wantsJson() || $request->ajax()) {
+        $existingInstitution = \App\Models\Institution::where('name', $nameUpper)->first();
+        
+        if ($existingInstitution) {
+            // Se la enviamos con un estado 200 (OK). El JS la recibirá y la seleccionará de una
+            return response()->json($existingInstitution, 200); 
+        }
+    }
+
+    // 3. Validación normal (si no es duplicado o si viene del formulario clásico)
     $validated = $request->validate([
         'name' => 'required|string|max:255',
         'country' => 'required|string|max:100',
         'type' => 'required|string',
     ]);
 
-    \App\Models\Institution::create($validated);
+    // 4. Crear el nuevo registro si pasó limpio
+    $institution = \App\Models\Institution::create([
+        'name' => $nameUpper,
+        'country' => strtoupper($validated['country']),
+        'type' => $validated['type'],
+    ]);
+
+    if ($request->wantsJson() || $request->ajax()) {
+        return response()->json($institution, 201);
+    }
 
     return redirect()->route('institutions.index')->with('status', 'Institución creada.');
 }

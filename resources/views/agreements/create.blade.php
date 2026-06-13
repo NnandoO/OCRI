@@ -1,5 +1,7 @@
 <x-layouts::app title="Registrar Nuevo Convenio">
-    <div class="p-6 max-w-full mx-auto space-y-6">
+    {{-- Variables de Alpine.js para controlar la previsualización del PDF en vivo --}}
+    <div class="p-6 max-w-full mx-auto space-y-6" x-data="{ pdfPreview: null, hasFile: false }">
+        
         <div class="flex justify-between items-center">
             <flux:heading size="xl" level="1" class="text-zinc-800 dark:text-white">Nuevo Convenio Institucional</flux:heading>
             <flux:button :href="route('agreements.index')" variant="ghost" icon="arrow-left" wire:navigate>
@@ -50,7 +52,7 @@
                             <flux:input 
                                 name="resolution_number" 
                                 placeholder="R.R. N° 001-2026" 
-                                value="{{ old('resolution_number') }}" 
+                                value="{{ old('resolution_number', $nextResolutionNumber ?? '') }}" 
                                 oninput="this.value = this.value.toUpperCase()"
                                 class="dark:bg-zinc-800/50 uppercase"
                             />
@@ -60,16 +62,17 @@
                 </div>
             </flux:card>
 
-            {{-- Bloque 2: Clasificación y Vigencia --}}
+            {{-- Grid a 2 columnas para Categorización y Archivo --}}
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {{-- Columna: Clasificación --}}
-                <flux:card class="bg-white dark:bg-zinc-800 shadow-sm border-zinc-200 dark:border-zinc-700 p-6">
+                
+                {{-- Bloque 2: Categorización --}}
+                <flux:card class="bg-white dark:bg-zinc-800 shadow-sm border-zinc-200 dark:border-zinc-700 p-6 h-fit">
                     <div class="flex items-center gap-2 mb-6 border-b border-zinc-100 dark:border-zinc-700 pb-3">
                         <flux:icon name="tag" class="size-5 text-zinc-400" />
                         <flux:heading size="lg">Categorización</flux:heading>
                     </div>
+                    
                     <div class="space-y-6">
-                        
                         <flux:field class="space-y-2">
                             <flux:label class="font-bold">Institución Aliada</flux:label>
                             <div class="flex items-start gap-2 mt-2">
@@ -97,27 +100,52 @@
                     </div>
                 </flux:card>
 
-                {{-- Columna: Vigencia --}}
+                {{-- Bloque 3: Archivo y Visor (Dinámico) --}}
                 <flux:card class="bg-white dark:bg-zinc-800 shadow-sm border-zinc-200 dark:border-zinc-700 p-6">
                     <div class="flex items-center gap-2 mb-6 border-b border-zinc-100 dark:border-zinc-700 pb-3">
-                        <flux:icon name="calendar" class="size-5 text-zinc-400" />
-                        <flux:heading size="lg">Vigencia y Archivo</flux:heading>
+                        <flux:icon name="paper-clip" class="size-5 text-zinc-400" />
+                        <flux:heading size="lg">Acervo y Vigencia (Opcional)</flux:heading>
                     </div>
+                    
                     <div class="space-y-6">
                         <flux:field class="space-y-2">
-                            <flux:label class="font-bold text-blue-600 dark:text-blue-400">Acervo Digital (PDF)</flux:label>
-                            <flux:input type="file" name="document" id="doc_file" accept=".pdf" class="mt-2 cursor-pointer dark:bg-zinc-800/50" />
+                            <flux:label class="font-bold text-blue-600 dark:text-blue-400">Adjuntar Convenio (PDF)</flux:label>
+                            {{-- Lógica de Alpine: Al subir el archivo, genera una URL temporal para el visor --}}
+                            <flux:input 
+                                type="file" 
+                                name="document" 
+                                accept=".pdf" 
+                                class="cursor-pointer dark:bg-zinc-800/50"
+                                x-on:change="
+                                    const file = $event.target.files[0];
+                                    hasFile = !!file;
+                                    if(file && file.type === 'application/pdf') {
+                                        pdfPreview = URL.createObjectURL(file);
+                                    } else {
+                                        pdfPreview = null;
+                                    }
+                                " 
+                            />
                         </flux:field>
-                        <div class="grid grid-cols-2 gap-4">
+
+                        {{-- Estos campos solo aparecen si se seleccionó un PDF --}}
+                        <div class="grid grid-cols-2 gap-4" x-show="hasFile" x-transition x-cloak>
                             <flux:field class="space-y-2">
                                 <flux:label class="font-bold">Fecha Inicio</flux:label>
-                                <flux:input type="date" name="start_date" id="s_date" disabled class="mt-2 dark:bg-zinc-800/50" />
+                                <flux:input type="date" name="start_date" class="dark:bg-zinc-800/50" x-bind:required="hasFile" />
                             </flux:field>
                             <flux:field class="space-y-2">
                                 <flux:label class="font-bold">Fecha Fin</flux:label>
-                                <flux:input type="date" name="end_date" id="e_date" disabled class="mt-2 dark:bg-zinc-800/50" />
+                                <flux:input type="date" name="end_date" class="dark:bg-zinc-800/50" x-bind:required="hasFile" />
                             </flux:field>
                         </div>
+
+                        {{-- Visor de PDF Integrado --}}
+                        <template x-if="pdfPreview">
+                            <div class="w-full h-[400px] mt-4 bg-zinc-100 dark:bg-zinc-900 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700">
+                                <iframe :src="pdfPreview" class="w-full h-full border-0" allow="autoplay"></iframe>
+                            </div>
+                        </template>
                     </div>
                 </flux:card>
             </div>
@@ -141,11 +169,10 @@
         <form id="quick-institution-form" class="space-y-4">
             <flux:field>
                 <flux:label>Nombre de la Institución</flux:label>
-                <flux:input id="new_inst_name" placeholder="Ej. Universidad Nacional de Ingeniería" required class="mt-1" />
+                <flux:input id="new_inst_name" placeholder="Ej. Universidad Nacional de Ingeniería" required class="mt-1" oninput="this.value = this.value.toUpperCase()" />
             </flux:field>
 
-            {{-- CAMBIO AQUÍ: Selector/Input de País Dinámico en el Modal --}}
-            <flux:field x-data="{ nuevoPaisModal: false }">
+            <flux:field class="space-y-1" x-data="{ nuevoPaisModal: false }">
                 <div class="flex justify-between items-center mb-1">
                     <flux:label>País</flux:label>
                     <button type="button" x-on:click="nuevoPaisModal = !nuevoPaisModal" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline focus:outline-none">
@@ -186,7 +213,7 @@
 
             <div class="flex justify-end gap-2 pt-4">
                 <flux:modal.close>
-                    <flux:button variant="ghost">Cancelar</flux:button>
+                    <flux:button variant="ghost" id="btn-close-institution-modal">Cancelar</flux:button>
                 </flux:modal.close>
                 <flux:button type="button" variant="primary" onclick="saveInstitution()" id="btn-save-inst">
                     Guardar y Seleccionar
@@ -196,34 +223,13 @@
     </flux:modal>
 
     <script>
-        // Lógica de fechas y PDF
-        document.addEventListener('DOMContentLoaded', function () {
-            const docFile = document.getElementById('doc_file');
-            const sDate = document.getElementById('s_date');
-            const eDate = document.getElementById('e_date');
-            if(docFile) {
-                docFile.addEventListener('change', function() {
-                    const hasFile = this.files.length > 0;
-                    sDate.disabled = !hasFile;
-                    eDate.disabled = !hasFile;
-                    sDate.required = hasFile;
-                    eDate.required = hasFile;
-                    if(!hasFile) { sDate.value = ''; eDate.value = ''; }
-                });
-            }
-        });
-
-        // Lógica para guardar la Institución por AJAX sin recargar la página
         async function saveInstitution() {
             const name = document.getElementById('new_inst_name').value;
             const type = document.getElementById('new_inst_type').value;
             const btnSave = document.getElementById('btn-save-inst');
 
-            // Lógica para obtener el país dependiendo de qué input esté visible
             const selectCountry = document.getElementById('new_inst_country_select').value;
             const inputCountry = document.getElementById('new_inst_country_input').value;
-            
-            // Si el select tiene valor, lo usa; si no, asume que escribió uno nuevo.
             const country = selectCountry || inputCountry;
 
             if(!name || !country || !type) {
@@ -239,30 +245,36 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
                     },
                     body: JSON.stringify({ name, country, type })
                 });
 
-                if(response.ok) {
-                    const data = await response.json(); 
-                    
-                    // Agregar la nueva opción al select principal de instituciones
-                    const select = document.getElementById('institution_select');
-                    const newOption = new Option(data.name, data.id, true, true);
-                    select.add(newOption);
-                    
-                    // Cerrar el modal y limpiar el formulario
-                    document.getElementById('quick-institution-form').reset();
-                    // Limpiar explícitamente el input de texto por si acaso
-                    document.getElementById('new_inst_country_input').value = ''; 
-                    Flux.modals.close('create-institution-modal');
-                } else {
-                    alert('Hubo un error al guardar la institución.');
+                if (!response.ok) {
+                    const errorTexto = await response.text();
+                    console.error(errorTexto);
+                    alert('Error en el servidor. Revisa la consola de inspección (F12) para ver el detalle.');
+                    return;
                 }
+
+                const data = await response.json();
+                
+                const select = document.getElementById('institution_select');
+                const newOption = new Option(data.name, data.id, true, true);
+                select.add(newOption);
+                
+                document.getElementById('quick-institution-form').reset();
+                document.getElementById('new_inst_country_input').value = ''; 
+                
+                const closeBtn = document.getElementById('btn-close-institution-modal');
+                if (closeBtn) {
+                    closeBtn.click();
+                }
+
             } catch (error) {
-                console.error('Error:', error);
-                alert('Error de conexión al guardar.');
+                console.error('Error crítico:', error);
+                alert('Ocurrió un fallo al procesar la respuesta del servidor: ' + error.message);
             } finally {
                 btnSave.disabled = false;
                 btnSave.innerText = 'Guardar y Seleccionar';
