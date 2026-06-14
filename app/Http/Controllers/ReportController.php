@@ -13,21 +13,12 @@ class ReportController extends Controller
 {
     public function index(Request $request)
     {
-        // 1. Definición de grupos para el nuevo filtro simplificado
-        $groupedClassifications = [
-            'Universidades' => ['Universidad Nacional', 'Universidad Privada', 'Universidad Internacional'],
-            'Comunidades' => ['Comunidad Campesina', 'Comunidad Nativa'],
-            'Empresas' => ['Empresa Nacional', 'Empresa Internacional'],
-            'Sector Público' => ['Municipalidad', 'Gobierno Regional', 'Salud'],
-            'Educación' => ['Institución Educativa', 'Centro de Estudios'],
-            'Otros/Asociaciones' => ['Asociación', 'Otros'],
-        ];
-
-        // Obtenemos los datos para los otros SELECTS
+        // 1. Obtenemos las 10 categorías exactas directamente de la BD
+        $classifications = Institution::distinct()->pluck('type')->filter()->sort();
         $types = AgreementType::all();
-        $countries = Institution::distinct()->pluck('country')->filter();
+        $countries = Institution::distinct()->pluck('country')->filter()->sort();
 
-        // 2. Iniciamos la consulta de Convenios
+        // 2. Iniciamos la consulta con la relación cargada
         $query = Agreement::query()->with('institution');
 
         // 3. Motor de Búsqueda
@@ -41,12 +32,9 @@ class ReportController extends Controller
             });
         }
 
-        // 4. Filtro Agrupado (Reemplaza a 'classification')
-        if ($request->filled('classification_group')) {
-            $group = $request->classification_group;
-            if (isset($groupedClassifications[$group])) {
-                $query->whereHas('institution', fn($q) => $q->whereIn('type', $groupedClassifications[$group]));
-            }
+        // 4. Filtro por Categoría (Ahora directo a la columna 'type')
+        if ($request->filled('classification')) {
+            $query->whereHas('institution', fn($q) => $q->where('type', $request->classification));
         }
 
         // Otros filtros
@@ -69,7 +57,7 @@ class ReportController extends Controller
 
         return view('reports.index', [
             'agreements' => $query->latest()->paginate(20)->withQueryString(),
-            'groupedClassifications' => $groupedClassifications, // Pasamos el mapa a la vista
+            'classifications' => $classifications, // Tus 10 categorías limpias
             'types' => $types,
             'countries' => $countries,
         ]);
