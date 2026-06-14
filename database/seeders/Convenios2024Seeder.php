@@ -89,11 +89,6 @@ class Convenios2024Seeder extends Seeder
             $nombreInstitucion = $fila[1];
             $tipoInstitucion = $fila[2];
 
-            // Si es una comunidad, sobreescribimos el nombre y unificamos el tipo
-            if (in_array($tipoInstitucion, ['Comunidad Campesina', 'Comunidad Nativa'])) {
-                $nombreInstitucion = 'COMUNIDADES CAMPESINAS Y NATIVAS';
-                $tipoInstitucion   = 'Comunidad'; 
-            }
             // --- FIN DE LA MODIFICACIÓN ---
 
             $institucion = Institution::firstOrCreate(

@@ -100,12 +100,6 @@ class Convenios2022Seeder extends Seeder
             $tipoInstitucion = $fila[2];
             $pais = $fila[6];
 
-            // Agrupar comunidades
-            if (str_contains($nombreInstitucion, 'COMUNIDAD')) {
-                $nombreInstitucion = 'COMUNIDADES CAMPESINAS Y NATIVAS';
-                $tipoInstitucion = 'Comunidad';
-            }
-
             // Buscar o crear la institución
             $institucion = Institution::firstOrCreate(
                 ['name' => $nombreInstitucion],
