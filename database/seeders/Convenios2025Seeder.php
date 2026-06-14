@@ -87,7 +87,7 @@ class Convenios2025Seeder extends Seeder
             ['063-2025', 'COMUNIDAD DE ACOLLA', 'Otros', 'CONVENIO MARCO DE COOPERACION INTERINSTITUCIONAL ENTRE LA UNCP Y LA COMUNIDAD de ACOLLA', '2025-11-26', '2027-11-26', 'Perú'],
             ['064-2025', 'COMUNIDAD DE PUCUCHO DE EL MANTARO', 'Otros', 'CONVENIO MARCO DE COOPERACION INTERINSTITUCIONAL ENTRE LA UNCP Y LA COMUNIDAD DE PUCUCHO', '2025-11-26', '2027-11-26', 'Perú'],
             ['065-2025', 'COMUNIDAD TRAGADERO DE MARCO', 'Otros', 'CONVENIO MARCO DE COOPERACION INTERINSTITUCIONAL ENTRE LA UNCP Y LA COMUNIDAD TRAGADERO', '2025-11-26', '2027-11-26', 'Perú'],
-            ['066-0025', 'COMUNIDAD DE RICRAN', 'Otros', 'CONVENIO MARCO DE COOPERACION INTERINSTITUCIONAL ENTRE LA UNCP Y LA COMUNIDAD DE RICRAN', '2025-11-26', '2027-11-26', 'Perú'],
+            ['066-2025', 'COMUNIDAD DE RICRAN', 'Otros', 'CONVENIO MARCO DE COOPERACION INTERINSTITUCIONAL ENTRE LA UNCP Y LA COMUNIDAD DE RICRAN', '2025-11-26', '2027-11-26', 'Perú'],
             ['067-2025', 'COMUNIDAD DE TUNANMARCA', 'Otros', 'CONVENIO MARCO DE COOPERACION INTERINSTITUCIONAL ENTRE LA UNCP Y LA COMUNIDAD DE TUNANMARCA', '2025-11-26', '2026-11-26', 'Perú'],
             ['068-2025', 'COMUNIDAD DE SINCOS', 'Otros', 'CONVENIO MARCO DE COOPERACION INTERINSTITUCIONAL ENTRE LA UNCP Y LA COMUNIDAD DE SINCOS', '2025-11-26', '2026-11-26', 'Perú'],
             ['069-2025', 'SERFOR', 'Otros', 'ADENDA N 1 AL CONVENIO MARCO ENTRE SERFOR Y LA UNCP', '2025-06-03', '2027-06-03', 'Perú'],
@@ -131,12 +131,6 @@ class Convenios2025Seeder extends Seeder
             $nombreInstitucion = strtoupper($fila[1]);
             $tipoInstitucion = $fila[2];
             $pais = $fila[6]; // Se lee el país directamente de la fila
-
-            // Lógica para agrupar todas las Comunidades en una sola Institución
-            if (str_contains($nombreInstitucion, 'COMUNIDAD')) {
-                $nombreInstitucion = 'COMUNIDADES CAMPESINAS Y NATIVAS';
-                $tipoInstitucion = 'Comunidad';
-            }
 
             // Se crea o busca la institución utilizando la data validada
             $institucion = Institution::firstOrCreate(
