@@ -26,14 +26,18 @@
                             <flux:input name="search" icon="magnifying-glass" placeholder="Buscar..." value="{{ request('search') }}" class="dark:bg-zinc-800/50" />
                         </flux:field>
 
-                        <flux:field class="lg:col-span-2">
-                            <flux:label class="font-bold text-[11px] uppercase tracking-widest text-zinc-400 mb-2 block">Entidad</flux:label>
-                            <flux:select name="classification" placeholder="Todas">
-                                @foreach($classifications as $cls)
-                                    <flux:select.option value="{{ $cls }}" :selected="request('classification') == $cls">{{ $cls }}</flux:select.option>
-                                @endforeach
-                            </flux:select>
-                        </flux:field>
+                        {{-- Busca esta parte en tu archivo y cámbiala por esto --}}
+<flux:field class="lg:col-span-2">
+    <flux:label class="font-bold text-[11px] uppercase tracking-widest text-zinc-400 mb-2 block">Categoría</flux:label>
+    <flux:select name="classification_group" placeholder="Todas">
+        <flux:select.option value="">Todas</flux:select.option>
+        @foreach($groupedClassifications as $groupName => $types)
+            <flux:select.option value="{{ $groupName }}" :selected="request('classification_group') == $groupName">
+                {{ $groupName }}
+            </flux:select.option>
+        @endforeach
+    </flux:select>
+</flux:field>
 
                         <flux:field class="lg:col-span-2">
                             <flux:label class="font-bold text-[11px] uppercase tracking-widest text-zinc-400 mb-2 block">Modalidad</flux:label>
