@@ -13,7 +13,6 @@ class Convenios2025Seeder extends Seeder
     public function run()
     {
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        Agreement::truncate();
 
         // 1. Crear los 3 tipos de alianza oficiales
         $tipos = [
