@@ -7,7 +7,7 @@ use App\Models\Agreement;
 use App\Models\Institution;
 use App\Models\AgreementType;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage; // <-- Para verificar los archivos en storage
+use Illuminate\Support\Facades\Storage;
 
 class Convenios2024Seeder extends Seeder
 {
@@ -20,6 +20,7 @@ class Convenios2024Seeder extends Seeder
             'especifico' => AgreementType::firstOrCreate(['name' => 'Convenio Específico']),
             'memorando' => AgreementType::firstOrCreate(['name' => 'Memorando de Entendimiento']),
         ];
+        
         // Estructura: [0: Código/Resolución, 1: Institución, 2: Tipo, 3: Nombre del convenio, 4: Fecha Inicio, 5: Fecha Fin, 6: País]
         $datos = [
             ['001-2024', 'COMUNIDAD CAMPESINA DE HUARI', 'Comunidad Campesina', 'CONVENIO MARCO DE COOPERACION INTERINSTITUCIONAL ENTRE LA UNIVERSIDAD NACIONAL DEL CENTRO DEL PERÚ Y LA COMUNIDAD CAMPESINA DE HUARI', '2024-01-08', '2026-01-08', 'Perú'],
@@ -82,10 +83,22 @@ class Convenios2024Seeder extends Seeder
             ['058-2024', 'MUNICIPALIDAD DISTRITAL DE MARCAPOMACOCHA', 'Municipalidad', 'CONVENIO TRIPARTITO MUNICIPALIDAD, UNCP Y SAIS PACHACUTEC', '2024-12-30', '2026-12-30', 'Perú'],
         ];
 
-     foreach ($datos as $fila) {
+        foreach ($datos as $fila) {
+            
+            // --- INICIO DE LA MODIFICACIÓN ---
+            $nombreInstitucion = $fila[1];
+            $tipoInstitucion = $fila[2];
+
+            // Si es una comunidad, sobreescribimos el nombre y unificamos el tipo
+            if (in_array($tipoInstitucion, ['Comunidad Campesina', 'Comunidad Nativa'])) {
+                $nombreInstitucion = 'COMUNIDADES CAMPESINAS Y NATIVAS';
+                $tipoInstitucion   = 'Comunidad'; 
+            }
+            // --- FIN DE LA MODIFICACIÓN ---
+
             $institucion = Institution::firstOrCreate(
-                ['name' => $fila[1]],
-                ['type' => $fila[2], 'country' => $fila[6]]
+                ['name' => $nombreInstitucion],
+                ['type' => $tipoInstitucion, 'country' => $fila[6]]
             );
 
             $nombreLargo = strtoupper($fila[3]);
@@ -97,7 +110,6 @@ class Convenios2024Seeder extends Seeder
                 $tipoId = $tipos['marco']->id;
             }
 
-            // 1. Creamos el convenio SIN la columna pdf_path (regresa a su estado original)
             $agreement = Agreement::create([
                 'title' => $fila[0],
                 'name' => $fila[3],
@@ -109,12 +121,17 @@ class Convenios2024Seeder extends Seeder
                 'status' => 'Vigente'
             ]);
 
-            // 2. LÓGICA VINCULADA A TU TABLA DE DOCUMENTOS
+            // 2. Lógica actualizada para buscar en subcarpetas por año
             $codigo = $fila[0]; // Ej: '001-2024'
-            $rutaRelativa = "convenios/{$codigo}.pdf"; 
+            
+            // Extraemos los últimos 4 caracteres del código para obtener el año (ej: '2024')
+            $anio = substr($codigo, -4); 
+            
+            // Armamos la ruta incluyendo la carpeta del año
+            $rutaRelativa = "convenios/{$anio}/{$codigo}.pdf"; 
 
-            // Si el PDF existe en storage/app/public/convenios/, lo registramos en su tabla correspondiente
-            if (Storage::disk('public')->exists($rutaRelativa)) {
+            // Verificamos si existe y lo guardamos
+            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($rutaRelativa)) {
                 $agreement->documents()->create([
                     'name' => 'Doc - ' . ($agreement->resolution_number ?? $agreement->title),
                     'file_path' => $rutaRelativa,
