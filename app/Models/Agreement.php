@@ -18,7 +18,8 @@ class Agreement extends Model
         'agreement_type_id', 
         'start_date', 
         'end_date', 
-        'status'
+        'status',
+        'situation', // <-- Campo agregado para permitir el guardado de notas
     ];
 
     protected $casts = [

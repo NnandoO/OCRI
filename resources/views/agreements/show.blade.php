@@ -89,7 +89,7 @@
         {{-- 3. LAYOUT PRINCIPAL A DOS COLUMNAS --}}
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            {{-- COLUMNA IZQUIERDA (Hoja de Ruta) --}}
+            {{-- COLUMNA IZQUIERDA (Hoja de Ruta y Notas) --}}
             <div class="lg:col-span-5 xl:col-span-4 space-y-6">
                 
                 @if($isHistorical)
@@ -246,6 +246,29 @@
                         @endif
                     </flux:card>
                 @endif
+
+                {{-- CUADRO DE SITUACIÓN / NOTAS (Movido debajo de Hoja de Ruta) --}}
+                <flux:card class="bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 relative">
+                    <div class="absolute top-4 right-4 text-amber-500 dark:text-amber-600">
+                        <flux:icon name="pencil-square" class="size-5" />
+                    </div>
+                    <flux:heading size="sm" class="mb-3 text-amber-800 dark:text-amber-500">Situación / Notas del Convenio</flux:heading>
+                    
+                    <form action="{{ route('agreements.update', $agreement->id) }}" method="POST" class="m-0 p-0">
+                        @csrf
+                        @method('PUT')
+                        <textarea name="situation" rows="2" 
+                                  class="w-full text-sm rounded-lg border border-amber-200 dark:border-amber-700/50 bg-white dark:bg-zinc-900 focus:border-amber-500 focus:ring-amber-500 text-zinc-700 dark:text-zinc-300 placeholder-zinc-400 transition-colors resize-none p-3" 
+                                  placeholder="Anota aquí la situación o estado actual del trámite...">{{ $agreement->situation ?? '' }}</textarea>
+                        
+                        <div class="flex justify-end mt-2">
+                            <button type="submit" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors">
+                                Guardar Nota
+                            </button>
+                        </div>
+                    </form>
+                </flux:card>
+
             </div>
 
             {{-- COLUMNA DERECHA (Visor, Info y Acervo) --}}

@@ -48,6 +48,16 @@ class AgreementController extends Controller
 
     public function update(Request $request, Agreement $agreement)
     {
+        // Caso 1: Actualización rápida de la nota/situación (viene de la vista show)
+        if ($request->has('situation') && !$request->has('name')) {
+            $request->validate(['situation' => 'nullable|string']);
+            
+            $agreement->update(['situation' => $request->situation]);
+            
+            return back()->with('status', 'Nota guardada correctamente.');
+        }
+
+        // Caso 2: Actualización completa del convenio (viene de la vista edit)
         $validated = $request->validate([
             'name' => 'required|string|max:500',
             'title' => 'required|string|max:255',
@@ -294,7 +304,8 @@ class AgreementController extends Controller
         return redirect()->route('agreements.show', $item->agreement_id)
                          ->with('status', 'Documento subido correctamente al área.');
     }
-public function uploadMainDocument(Request $request, Agreement $agreement)
+
+    public function uploadMainDocument(Request $request, Agreement $agreement)
     {
         $request->validate([
             'document' => 'required|mimes:pdf|max:10240',
@@ -315,8 +326,9 @@ public function uploadMainDocument(Request $request, Agreement $agreement)
         return back()->with('status', 'Documento del convenio subido correctamente.');
     }
 
-public function destroyMainDocument($id)
+    public function destroyMainDocument($id)
     {
+        // CORREGIDO: $do1ument -> $document
         $document = \App\Models\Document::findOrFail($id);
 
         // Borrar archivo físico del almacenamiento público
