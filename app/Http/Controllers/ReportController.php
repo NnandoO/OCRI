@@ -55,11 +55,17 @@ class ReportController extends Controller
             return Excel::download(new AgreementsExport($query->latest()->get()), 'reporte_convenios_ocri.xlsx');
         }
 
+        $perPage = $request->input('per_page', 20);
+        if (!in_array($perPage, [10, 20, 25, 50, 100])) {
+            $perPage = 20;
+        }
+
         return view('reports.index', [
-            'agreements' => $query->latest()->paginate(20)->withQueryString(),
-            'classifications' => $classifications, // Tus 10 categorías limpias
+            'agreements' => $query->latest()->paginate($perPage)->withQueryString(),
+            'classifications' => $classifications,
             'types' => $types,
             'countries' => $countries,
+            'perPage' => $perPage,
         ]);
     }
 }

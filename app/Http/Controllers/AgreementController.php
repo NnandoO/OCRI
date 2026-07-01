@@ -10,15 +10,14 @@ use App\Models\RoadmapItem;
 use App\Models\RoadmapDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use setasign\Fpdi\Fpdi;
 
 class AgreementController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Agreement::query()->with('institution');
+        $query = Agreement::query()->with(['institution', 'roadmapItems.documents']);
 
-        // Motor de Búsqueda Global en AgreementController.php
+        // Motor de Búsqueda Global
         if ($request->filled('search')) {
             $term = '%' . trim($request->search) . '%';
             
@@ -33,9 +32,45 @@ class AgreementController extends Controller
             });
         }
 
-        $agreements = $query->latest()->paginate(15)->withQueryString();
+        // Filtro por estado
+        if ($request->filled('status')) {
+            $statusFilter = $request->status;
+            
+            if ($statusFilter === 'En Proceso') {
+                $query->where('status', 'En Proceso');
+            } elseif ($statusFilter === 'Vigente') {
+                $query->where('status', 'Vigente')
+                      ->where(function ($q) {
+                          $q->whereNull('end_date')
+                            ->orWhere('end_date', '>=', now());
+                      });
+            } elseif ($statusFilter === 'Por Vencer') {
+                $query->where('status', 'Vigente')
+                      ->whereNotNull('end_date')
+                      ->where('end_date', '>=', now())
+                      ->where('end_date', '<=', now()->addDays(90));
+            } elseif ($statusFilter === 'Vencido') {
+                $query->where(function ($q) {
+                    $q->where('status', 'Vencido')
+                      ->orWhere(function ($q2) {
+                          $q2->where('status', 'Vigente')
+                             ->whereNotNull('end_date')
+                             ->where('end_date', '<', now());
+                      });
+                });
+            }
+        }
 
-        return view('agreements.index', compact('agreements'));
+        $perPage = $request->input('per_page', 15);
+        if (!in_array($perPage, [10, 15, 25, 50, 100])) {
+            $perPage = 15;
+        }
+
+        $agreements = $query->latest()->paginate($perPage)->withQueryString();
+
+        $currentStatus = $request->status;
+
+        return view('agreements.index', compact('agreements', 'currentStatus', 'perPage'));
     }
 
     public function edit(Agreement $agreement)
@@ -61,7 +96,7 @@ class AgreementController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:500',
             'title' => 'required|string|max:255',
-            'resolution_number' => 'nullable|string|max:100',
+            'resolution_number' => 'nullable|string|max:100|unique:agreements,resolution_number,' . $agreement->id,
             'institution_id' => 'required|exists:institutions,id',
             'agreement_type_id' => 'required|exists:agreement_types,id',
             'start_date' => 'nullable|date',
@@ -129,11 +164,12 @@ class AgreementController extends Controller
     {
         $rules = [
             'title' => 'required|string|max:255',
-            'name' => 'required|string', 
-            'resolution_number' => 'nullable|string|unique:agreements,resolution_number',
+            'name' => 'required|string|max:500',
+            'resolution_number' => 'nullable|string|max:100|unique:agreements,resolution_number',
             'institution_id' => 'required|exists:institutions,id',
             'agreement_type_id' => 'required|exists:agreement_types,id',
             'document' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+            'dictamen' => 'nullable|file|mimes:pdf|max:10240',
         ];
 
         if ($request->hasFile('document')) {
@@ -144,11 +180,17 @@ class AgreementController extends Controller
         $validated = $request->validate($rules);
         $validated['status'] = $request->hasFile('document') ? 'Vigente' : 'En Proceso';
 
+        if ($request->hasFile('dictamen')) {
+            $file = $request->file('dictamen');
+            $path = $file->store('resoluciones', 'public');
+            $validated['dictamen_path'] = $path;
+            $validated['dictamen_original_name'] = $file->getClientOriginalName();
+        }
+
         $agreement = Agreement::create($validated);
 
         if ($request->hasFile('document')) {
             $file = $request->file('document');
-            // Todo apunta a resoluciones
             $path = $file->store('resoluciones', 'public');
             
             $agreement->documents()->create([
@@ -207,14 +249,42 @@ class AgreementController extends Controller
 
     public function updateStatus(Request $request, Agreement $agreement)
     {
-        $agreement->update(['status' => $request->status]);
+        $validated = $request->validate([
+            'status' => 'required|string|in:En Proceso,Vigente,Vencido,Formulación',
+        ]);
+        $agreement->update($validated);
         return back()->with('status', 'Estado actualizado correctamente.');
     }
 
     public function show(Agreement $agreement)
     {
-        $agreement->load(['institution', 'type', 'documents', 'roadmapItems']);
-        return view('agreements.show', compact('agreement'));
+        $agreement->load(['institution', 'type', 'documents', 'roadmapItems.documents', 'oficios']);
+
+        $currentYear = date('Y');
+        $lastOficio = \App\Models\Oficio::whereYear('created_at', $currentYear)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($lastOficio) {
+            $parts = explode('-', $lastOficio->oficio_number);
+            $lastNum = is_numeric($parts[0]) ? (int)$parts[0] : 0;
+            $nextNum = $lastNum + 1;
+        } else {
+            $lastAgreement = Agreement::where('resolution_number', 'LIKE', "%-{$currentYear}")
+                ->orderBy('id', 'desc')
+                ->first();
+            if ($lastAgreement && $lastAgreement->resolution_number) {
+                $parts = explode('-', $lastAgreement->resolution_number);
+                $lastNum = is_numeric($parts[0]) ? (int)$parts[0] : 0;
+                $nextNum = $lastNum + 1;
+            } else {
+                $nextNum = 1;
+            }
+        }
+
+        $nextOficioNumber = str_pad($nextNum, 3, '0', STR_PAD_LEFT) . '-' . $currentYear;
+
+        return view('agreements.show', compact('agreement', 'nextOficioNumber'));
     }
 
     public function storeRoadmap(Request $request, Agreement $agreement)
@@ -262,19 +332,26 @@ class AgreementController extends Controller
 
         $stats = [
             'vigentes' => \App\Models\Agreement::where('status', 'Vigente')
-                            ->where('end_date', '>', $now)
-                            ->count(),
+                            ->where(function ($q) use ($now) {
+                                $q->whereNull('end_date')->orWhere('end_date', '>', $now);
+                            })->count(),
             'por_vencer' => \App\Models\Agreement::where('status', 'Vigente')
+                            ->whereNotNull('end_date')
                             ->whereBetween('end_date', [$now, $inNinetyDays])
                             ->count(),
-            'vencidos' => \App\Models\Agreement::where('status', 'Vigente')
-                            ->where('end_date', '<', $now)
-                            ->count(),
+            'vencidos' => \App\Models\Agreement::where(function ($q) use ($now) {
+                            $q->where('status', 'Vencido')
+                              ->orWhere(function ($q2) use ($now) {
+                                  $q2->where('status', 'Vigente')
+                                     ->whereNotNull('end_date')
+                                     ->where('end_date', '<', $now);
+                              });
+                          })->count(),
         ];
 
         $recentAgreements = \App\Models\Agreement::with(['institution'])
                             ->latest()
-                            ->take(5)
+                            ->take(10)
                             ->get();
 
         return view('dashboard', compact('stats', 'recentAgreements'));
@@ -286,23 +363,37 @@ class AgreementController extends Controller
 
     public function uploadDocument(Request $request, RoadmapItem $item)
     {
-        if (!$request->hasFile('document')) {
-            return redirect()->route('agreements.show', $item->agreement_id)
-                ->withErrors(['document' => 'No se recibió el archivo.']);
+        $files = $request->file('documents', []);
+        if (!is_array($files)) {
+            $files = [$files];
         }
 
-        $request->validate(['document' => 'required|mimes:pdf|max:10240']); 
-        
-        // Todo apunta a resoluciones
-        $path = $request->file('document')->store('resoluciones', 'public');
-        
-        $item->documents()->create([
-            'file_path' => $path,
-            'original_name' => $request->file('document')->getClientOriginalName()
-        ]);
+        if (empty($files) || (count($files) === 1 && !$files[0])) {
+            return redirect()->route('agreements.show', $item->agreement_id)
+                ->withErrors(['documents' => 'No se recibió ningún archivo.']);
+        }
+
+        $request->validate(['documents.*' => 'required|mimes:pdf|max:10240']); 
+
+        $type = $request->input('type', 'entrada');
+        if (!in_array($type, ['entrada', 'salida'])) {
+            $type = 'entrada';
+        }
+
+        $count = 0;
+        foreach ($files as $file) {
+            $path = $file->store('resoluciones', 'public');
+            
+            $item->documents()->create([
+                'file_path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'type' => $type,
+            ]);
+            $count++;
+        }
 
         return redirect()->route('agreements.show', $item->agreement_id)
-                         ->with('status', 'Documento subido correctamente al área.');
+                         ->with('status', "{$count} documento(s) subido(s) correctamente al área.");
     }
 
     public function uploadMainDocument(Request $request, Agreement $agreement)
@@ -328,7 +419,7 @@ class AgreementController extends Controller
 
     public function destroyMainDocument($id)
     {
-        // CORREGIDO: $do1ument -> $document
+
         $document = \App\Models\Document::findOrFail($id);
 
         // Borrar archivo físico del almacenamiento público
@@ -357,80 +448,21 @@ class AgreementController extends Controller
             ->with('status', 'Archivo eliminado correctamente.');
     }
 
-    public function consolidateExpedient(Agreement $agreement)
+    public function updateEnvio(Request $request, RoadmapItem $item)
     {
-        $pdf = new Fpdi();
-        $tempFilesToDelete = [];
-
-        // Obtener todos los documentos de las opiniones
-        $documents = RoadmapDocument::whereHas('roadmapItem', function($query) use ($agreement) {
-            $query->where('agreement_id', $agreement->id);
-        })->orderBy('created_at', 'desc')->get();
-
-        if ($documents->isEmpty()) {
-            return back()->with('status', 'No hay documentos para consolidar.');
-        }
-
-        $mergedPages = 0;
-
-        foreach ($documents as $doc) {
-            $filePath = storage_path('app/public/' . $doc->file_path);
-            
-            if (file_exists($filePath)) {
-                
-                // 1. LA MAGIA: Usamos la herramienta que instalaste (gs) para quitarle la compresión al PDF
-                $tempDowngradedPath = storage_path('app/public/temp_' . uniqid() . '.pdf');
-                $cmd = "gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=" . escapeshellarg($tempDowngradedPath) . " " . escapeshellarg($filePath);
-                exec($cmd);
-
-                // 2. Le pasamos el archivo arreglado a FPDI
-                $fileToProcess = file_exists($tempDowngradedPath) ? $tempDowngradedPath : $filePath;
-
-                try {
-                    $pageCount = $pdf->setSourceFile($fileToProcess);
-                    for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                        $templateId = $pdf->importPage($pageNo);
-                        $size = $pdf->getTemplateSize($templateId);
-                        $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-                        $pdf->useTemplate($templateId);
-                        $mergedPages++;
-                    }
-                } catch (\Exception $e) {
-                    // Si un archivo está corrupto, lo ignoramos para que no rompa el sistema
-                }
-
-                // 3. Borramos el archivo temporal que usamos para arreglarlo
-                if (file_exists($tempDowngradedPath)) {
-                    unlink($tempDowngradedPath);
-                }
-                
-                $tempFilesToDelete[] = $doc->file_path; 
-            }
-        }
-
-        if ($mergedPages === 0) {
-            return back()->with('status', 'Error: No se pudieron procesar los PDFs.');
-        }
-
-        // 4. Guardamos el PDF unido final en la carpeta resoluciones
-        $finalFileName = 'expediente_opiniones_' . $agreement->id . '_' . time() . '.pdf';
-        $finalPath = 'resoluciones/' . $finalFileName;
-        $pdf->Output(storage_path('app/public/' . $finalPath), 'F');
-
-        // 5. Lo registramos en la base de datos
-        $agreement->documents()->create([
-            'name' => 'Expediente Final (Solo Opiniones)',
-            'file_path' => $finalPath,
-            'extension' => 'pdf'
+        $validated = $request->validate([
+            'envio_tipo' => 'nullable|in:adesa,correo',
+            'numero_expediente' => 'nullable|string|max:100',
         ]);
 
-        // 6. Eliminamos los PDFs sueltos de las opiniones
-        foreach($tempFilesToDelete as $tempFile) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($tempFile);
+        if ($validated['envio_tipo'] === 'correo') {
+            $validated['numero_expediente'] = null;
         }
-        RoadmapDocument::whereIn('file_path', $tempFilesToDelete)->delete();
 
-        return back()->with('status', 'Opiniones unidas y expediente generado con éxito.');
+        $item->update($validated);
+
+        return redirect()->route('agreements.show', $item->agreement_id)
+            ->with('status', 'Información de envío actualizada.');
     }
 
     public function destroy(Agreement $agreement)

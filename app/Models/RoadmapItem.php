@@ -13,7 +13,9 @@ class RoadmapItem extends Model
         'agreement_id',
         'area_name',
         'is_completed',
-        'order'
+        'order',
+        'envio_tipo',
+        'numero_expediente',
     ];
 
     public function agreement()
@@ -21,7 +23,6 @@ class RoadmapItem extends Model
         return $this->belongsTo(Agreement::class);
     }
     
-    // 👇 ESTA ES LA FUNCIÓN QUE TE FALTA Y ESTÁ CAUSANDO EL ERROR 👇
     public function documents()
     {
         return $this->hasMany(RoadmapDocument::class);

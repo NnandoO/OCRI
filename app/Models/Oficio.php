@@ -2,21 +2,26 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RoadmapDocument extends Model
+class Oficio extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
+        'agreement_id',
         'roadmap_item_id',
+        'area_name',
+        'directed_to',
+        'oficio_number',
         'file_path',
-        'original_name',
+        'file_original_name',
         'type',
     ];
 
-    // Relación: Este documento pertenece a una sola área de la hoja de ruta
+    public function agreement()
+    {
+        return $this->belongsTo(Agreement::class);
+    }
+
     public function roadmapItem()
     {
         return $this->belongsTo(RoadmapItem::class);

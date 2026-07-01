@@ -24,7 +24,7 @@
                             <flux:table.cell>{{ $agreement->title }}</flux:table.cell>
                             <flux:table.cell>{{ $agreement->type->name }}</flux:table.cell>
                             <flux:table.cell>
-                                <flux:badge color="green">Activo</flux:badge>
+                                <flux:badge :color="$agreement->status === 'Vigente' ? 'green' : 'zinc'">{{ $agreement->status }}</flux:badge>
                             </flux:table.cell>
                         </flux:table.row>
                     @endforeach

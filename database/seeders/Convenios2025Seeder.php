@@ -146,7 +146,9 @@ class Convenios2025Seeder extends Seeder
                 $tipoId = $tipos['marco']->id;
             }
 
-            $agreement = Agreement::create([
+            $agreement = Agreement::firstOrCreate(
+                ['resolution_number' => $fila[0]],
+                [
                 'title' => $fila[0],
                 'name' => $fila[3],
                 'resolution_number' => $fila[0],
@@ -162,7 +164,9 @@ class Convenios2025Seeder extends Seeder
             $rutaRelativa = "convenios/{$anio}/{$codigo}.pdf"; 
 
             if (Storage::disk('public')->exists($rutaRelativa)) {
-                $agreement->documents()->create([
+                $agreement->documents()->firstOrCreate(
+                    ['file_path' => $rutaRelativa],
+                    [
                     'name' => 'Doc - ' . ($agreement->resolution_number ?? $agreement->title),
                     'file_path' => $rutaRelativa,
                     'extension' => 'pdf'

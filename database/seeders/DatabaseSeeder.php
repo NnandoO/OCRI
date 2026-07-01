@@ -14,7 +14,21 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            // Aquí llamas a todos tus seeders en el orden que prefieras
+            Convenios2005Seeder::class,
+            Convenios2006Seeder::class,
+            Convenios2007Seeder::class,
+            Convenios2008Seeder::class,
+            Convenios2009Seeder::class,
+            Convenios2010Seeder::class,
+            Convenios2011Seeder::class,
+            Convenios2012Seeder::class,
+            Convenios2013Seeder::class,
+            Convenios2014Seeder::class,
+            Convenios2015Seeder::class,
+            Convenios2016Seeder::class,
+            Convenios2017Seeder::class,
+            Convenios2018Seeder::class,
+            Convenios2019Seeder::class,
             Convenios2020Seeder::class,
             Convenios2021Seeder::class,
             Convenios2022Seeder::class,

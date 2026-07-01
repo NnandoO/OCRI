@@ -21,19 +21,32 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
                     <flux:field class="lg:col-span-3">
-                        <flux:label class="font-bold mb-2 block text-zinc-700 dark:text-zinc-300">Nombre Oficial del Convenio</flux:label>
-                        <flux:textarea 
-                            name="name" 
-                            placeholder="NOMBRE COMPLETO SEGÚN RESOLUCIÓN..." 
-                            rows="3" 
+                        <flux:label class="font-bold mb-2 block text-zinc-700 dark:text-zinc-300">N° de Convenio</flux:label>
+                        <flux:input 
+                            name="resolution_number" 
+                            placeholder="R.R. N° 001-2026" 
+                            value="{{ old('resolution_number', $nextResolutionNumber ?? '') }}" 
                             required
                             oninput="this.value = this.value.toUpperCase()"
-                            class="dark:bg-zinc-800/50 resize-none mt-2 uppercase"
-                        >{{ old('name') }}</flux:textarea>
-                        <flux:error name="name" />
+                            class="dark:bg-zinc-800/50 uppercase"
+                        />
+                        <flux:error name="resolution_number" />
                     </flux:field>
 
-                    <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="lg:col-span-3 grid grid-cols-1 gap-6">
+                        <flux:field>
+                            <flux:label class="font-bold mb-2 block text-zinc-700 dark:text-zinc-300">Nombre Oficial del Convenio</flux:label>
+                            <flux:textarea 
+                                name="name" 
+                                placeholder="NOMBRE COMPLETO SEGÚN RESOLUCIÓN..." 
+                                rows="2" 
+                                required
+                                oninput="this.value = this.value.toUpperCase()"
+                                class="dark:bg-zinc-800/50 resize-none uppercase"
+                            >{{ old('name') }}</flux:textarea>
+                            <flux:error name="name" />
+                        </flux:field>
+
                         <flux:field>
                             <flux:label class="font-bold mb-2 block text-zinc-700 dark:text-zinc-300">Título Corto / Referencia</flux:label>
                             <flux:input 
@@ -45,18 +58,6 @@
                                 class="dark:bg-zinc-800/50 uppercase"
                             />
                             <flux:error name="title" />
-                        </flux:field>
-
-                        <flux:field>
-                            <flux:label class="font-bold mb-2 block text-zinc-700 dark:text-zinc-300">N° de Resolución Rectoral</flux:label>
-                            <flux:input 
-                                name="resolution_number" 
-                                placeholder="R.R. N° 001-2026" 
-                                value="{{ old('resolution_number', $nextResolutionNumber ?? '') }}" 
-                                oninput="this.value = this.value.toUpperCase()"
-                                class="dark:bg-zinc-800/50 uppercase"
-                            />
-                            <flux:error name="resolution_number" />
                         </flux:field>
                     </div>
                 </div>
@@ -108,8 +109,24 @@
                     </div>
                     
                     <div class="space-y-6">
+
+                        {{-- NUEVO: Campo para subir Dictamen / Documento Original --}}
                         <flux:field class="space-y-2">
-                            <flux:label class="font-bold text-blue-600 dark:text-blue-400">Adjuntar Convenio (PDF)</flux:label>
+                            <flux:label class="font-bold text-amber-600 dark:text-amber-400">Dictamen / Documento Original (Opcional)</flux:label>
+                            <flux:text size="xs" class="text-zinc-500 -mt-1">Documento que sustenta la solicitud de dictamen de rectorado o la suscripcion del convenio.</flux:text>
+                            <flux:input 
+                                type="file" 
+                                name="dictamen" 
+                                accept=".pdf" 
+                                class="cursor-pointer dark:bg-zinc-800/50"
+                            />
+                            <flux:error name="dictamen" />
+                        </flux:field>
+
+                        <hr class="border-zinc-200 dark:border-zinc-700">
+
+                        <flux:field class="space-y-2">
+                            <flux:label class="font-bold text-blue-600 dark:text-blue-400">Adjuntar Convenio Firmado (PDF)</flux:label>
                             {{-- Lógica de Alpine: Al subir el archivo, genera una URL temporal para el visor --}}
                             <flux:input 
                                 type="file" 

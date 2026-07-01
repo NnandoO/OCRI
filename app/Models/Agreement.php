@@ -19,7 +19,9 @@ class Agreement extends Model
         'start_date', 
         'end_date', 
         'status',
-        'situation', // <-- Campo agregado para permitir el guardado de notas
+        'situation',
+        'dictamen_path',
+        'dictamen_original_name',
     ];
 
     protected $casts = [
@@ -72,5 +74,10 @@ class Agreement extends Model
     public function roadmapItems(): HasMany
     {
         return $this->hasMany(RoadmapItem::class)->orderBy('order');
+    }
+
+    public function oficios(): HasMany
+    {
+        return $this->hasMany(Oficio::class);
     }
 }

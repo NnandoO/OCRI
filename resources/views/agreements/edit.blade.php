@@ -41,32 +41,40 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
                     <flux:field class="lg:col-span-3">
-                        <flux:label class="font-bold mb-2 block text-zinc-700 dark:text-zinc-300">Nombre Oficial del Convenio</flux:label>
-                        <flux:textarea 
-                            name="name" 
-                            placeholder="Nombre completo según resolución..." 
-                            rows="3" 
+                        <flux:label class="font-bold mb-2 block text-zinc-700 dark:text-zinc-300">N° de Convenio</flux:label>
+                        <flux:input 
+                            name="resolution_number" 
+                            placeholder="R.R. N° 001-2026" 
+                            value="{{ old('resolution_number', $agreement->resolution_number) }}" 
                             required
-                            class="dark:bg-zinc-800/50 resize-none"
-                        >{{ old('name', $agreement->name) }}</flux:textarea>
-                        <flux:error name="name" />
+                            oninput="this.value = this.value.toUpperCase()"
+                            class="dark:bg-zinc-800/50 uppercase"
+                        />
+                        <flux:error name="resolution_number" />
                     </flux:field>
 
-                    <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="lg:col-span-3 grid grid-cols-1 gap-6">
+                        {{-- Nombre Oficial --}}
+                        <flux:field>
+                            <flux:label class="font-bold mb-2 block text-zinc-700 dark:text-zinc-300">Nombre Oficial del Convenio</flux:label>
+                            <flux:textarea 
+                                name="name" 
+                                placeholder="NOMBRE COMPLETO SEGÚN RESOLUCIÓN..." 
+                                rows="2" 
+                                required
+                                oninput="this.value = this.value.toUpperCase()"
+                                class="dark:bg-zinc-800/50 resize-none uppercase"
+                            >{{ old('name', $agreement->name) }}</flux:textarea>
+                            <flux:error name="name" />
+                        </flux:field>
+
                         {{-- Título Corto --}}
                         <flux:field>
                             <flux:label class="font-bold mb-2 block text-zinc-700 dark:text-zinc-300">Título Corto / Referencia</flux:label>
-                            <flux:input name="title" placeholder="Ej: UNCP - ESSALUD" value="{{ old('title', $agreement->title) }}" required class="dark:bg-zinc-800/50">
+                            <flux:input name="title" placeholder="EJ: UNCP - ESSALUD" value="{{ old('title', $agreement->title) }}" required class="dark:bg-zinc-800/50 uppercase"
+                                oninput="this.value = this.value.toUpperCase()">
                             </flux:input>
                             <flux:error name="title" />
-                        </flux:field>
-
-                        {{-- N° de Resolución --}}
-                        <flux:field>
-                            <flux:label class="font-bold mb-2 block text-zinc-700 dark:text-zinc-300">N° de Resolución Rectoral</flux:label>
-                            <flux:input name="resolution_number" placeholder="R.R. N° 001-2026" value="{{ old('resolution_number', $agreement->resolution_number) }}" class="dark:bg-zinc-800/50">
-                            </flux:input>
-                            <flux:error name="resolution_number" />
                         </flux:field>
                     </div>
                 </div>

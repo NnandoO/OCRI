@@ -123,9 +123,15 @@
                                 </flux:table.cell>
 
                                 <flux:table.cell class="text-center">
-                                    <flux:badge :color="$agreement->status === 'Vigente' ? 'green' : 'zinc'" variant="subtle" class="font-black px-3 uppercase text-[9px] tracking-widest border border-current/20">
+                                    @php
+                                        $reportBadge = 'bg-zinc-100 text-zinc-700 border-zinc-300 dark:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-600';
+                                        if ($agreement->status === 'Vigente') {
+                                            $reportBadge = 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700';
+                                        }
+                                    @endphp
+                                    <span class="inline-flex items-center font-black px-3 py-1 uppercase text-[9px] tracking-widest rounded-lg border {{ $reportBadge }}">
                                         {{ $agreement->status }}
-                                    </flux:badge>
+                                    </span>
                                 </flux:table.cell>
                             </flux:table.row>
                         @empty
@@ -136,6 +142,30 @@
                     </flux:table.rows>
                 </flux:table>
             </flux:card>
+
+            {{-- Paginación --}}
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800">
+                <div class="flex items-center gap-2 text-sm text-zinc-500">
+                    <span>Mostrar</span>
+                    <form action="{{ route('reports.index') }}" method="GET" class="m-0 p-0 inline">
+                        @if(request('search')) <input type="hidden" name="search" value="{{ request('search') }}"> @endif
+                        @if(request('classification')) <input type="hidden" name="classification" value="{{ request('classification') }}"> @endif
+                        @if(request('type_id')) <input type="hidden" name="type_id" value="{{ request('type_id') }}"> @endif
+                        @if(request('country')) <input type="hidden" name="country" value="{{ request('country') }}"> @endif
+                        @if(request('year')) <input type="hidden" name="year" value="{{ request('year') }}"> @endif
+                        <select name="per_page" onchange="this.form.submit()" 
+                                class="text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 focus:ring-blue-500 focus:border-blue-500">
+                            @foreach([10, 20, 25, 50, 100] as $count)
+                                <option value="{{ $count }}" {{ $perPage == $count ? 'selected' : '' }}>{{ $count }}</option>
+                            @endforeach
+                        </select>
+                    </form>
+                    <span>por página</span>
+                </div>
+                <div>
+                    {{ $agreements->links() }}
+                </div>
+            </div>
         </div>
     </div>
 

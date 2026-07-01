@@ -38,24 +38,27 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1">
             
-            <div class="lg:col-span-2 relative h-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 shadow-sm">
+            <div class="lg:col-span-2 relative flex flex-col rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 shadow-sm">
                 <div class="flex items-center justify-between mb-4">
                     <flux:heading level="2" size="lg">Convenios Recientes</flux:heading>
                     <flux:button variant="ghost" size="sm" icon="arrow-top-right-on-square" :href="route('agreements.index')" wire:navigate>Ver todos</flux:button>
                 </div>
                 
+                <div class="overflow-x-auto flex-1">
                 <flux:table>
                     <flux:table.columns>
-                        <flux:table.column>Institución</flux:table.column>
-                        <flux:table.column>País</flux:table.column>
+                        <flux:table.column>N° de Convenio</flux:table.column>
+                        <flux:table.column class="hidden sm:table-cell">Institución</flux:table.column>
+                        <flux:table.column class="hidden md:table-cell">País</flux:table.column>
                         <flux:table.column>Estado</flux:table.column>
                     </flux:table.columns>
 
                     <flux:table.rows>
                         @foreach($recentAgreements as $agreement)
                             <flux:table.row>
-                                <flux:table.cell class="font-medium">{{ $agreement->institution->name }}</flux:table.cell>
-                                <flux:table.cell>{{ $agreement->institution->country }}</flux:table.cell>
+                                <flux:table.cell class="font-mono text-xs font-bold">{{ $agreement->resolution_number ?? $agreement->title }}</flux:table.cell>
+                                <flux:table.cell class="hidden sm:table-cell font-medium">{{ $agreement->institution->name }}</flux:table.cell>
+                                <flux:table.cell class="hidden md:table-cell">{{ $agreement->institution->country }}</flux:table.cell>
                                 <flux:table.cell>
                                     @if($agreement->status === 'En Proceso')
                                         <flux:badge color="zinc" size="sm">En Proceso</flux:badge>
@@ -69,6 +72,7 @@
                         @endforeach
                     </flux:table.rows>
                 </flux:table>
+                </div>
             </div>
 
             <div class="space-y-4">

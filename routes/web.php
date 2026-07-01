@@ -2,21 +2,20 @@
 
 use App\Http\Controllers\AgreementController;
 use App\Http\Controllers\InstitutionController;
+use App\Http\Controllers\OficioController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReportController;
-use App\Http\Controllers\AgreementRoadmapController; // Asegúrate de importar el nombre correcto de tu controlador
 
-Route::post('/agreements/roadmap/{item}/upload', [\App\Http\Controllers\AgreementController::class, 'uploadDocument'])->name('agreements.roadmap.upload');
-Route::post('/agreements/{agreement}/consolidate', [\App\Http\Controllers\AgreementController::class, 'consolidateExpedient'])->name('agreements.roadmap.consolidate');
-Route::delete('/agreements/roadmap/document/{document}', [\App\Http\Controllers\AgreementController::class, 'deleteDocument'])->name('agreements.roadmap.delete-doc');
-Route::post('/api/institutions', [InstitutionController::class, 'store']);
-Route::post('/agreements/{agreement}/upload-main', [App\Http\Controllers\AgreementController::class, 'uploadMainDocument'])->name('agreements.upload-main');
-Route::delete('/documents/{id}', [App\Http\Controllers\AgreementController::class, 'destroyMainDocument'])->name('documents.destroy');
 // Página de inicio (Login)
 Route::view('/', 'pages.auth.login')->name('home');
 
 // Rutas Protegidas (Solo para usuarios logueados)
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('/agreements/roadmap/{item}/upload', [AgreementController::class, 'uploadDocument'])->name('agreements.roadmap.upload');
+    Route::delete('/agreements/roadmap/document/{document}', [AgreementController::class, 'deleteDocument'])->name('agreements.roadmap.delete-doc');
+    Route::post('/api/institutions', [InstitutionController::class, 'store']);
+    Route::post('/agreements/{agreement}/upload-main', [AgreementController::class, 'uploadMainDocument'])->name('agreements.upload-main');
+    Route::delete('/documents/{id}', [AgreementController::class, 'destroyMainDocument'])->name('documents.destroy');
     
     // Dashboard
     Route::get('dashboard', [AgreementController::class, 'dashboard'])->name('dashboard');
@@ -33,15 +32,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // --------------------------------------
 
         Route::patch('/agreements/{agreement}/status', 'updateStatus')->name('agreements.updateStatus');
-        Route::patch('/agreements/{agreement}/status', 'updateStatus')->name('agreements.update-status');
         
         Route::post('/agreements/{agreement}/roadmap', 'storeRoadmap')->name('agreements.roadmap.store');
+        Route::patch('/agreements/roadmap/{item}/envio', 'updateEnvio')->name('agreements.roadmap.envio');
         Route::patch('/agreements/roadmap/{itemId}/check', 'checkRoadmapItem')->name('agreements.roadmap.check');
         
         Route::delete('/agreements/{agreement}', 'destroy')->name('agreements.destroy');
     });
 
     Route::patch('/agreements/{agreement}/activate', [AgreementController::class, 'activate'])->name('agreements.activate');
+
+    // Módulo de Oficios
+    Route::get('/agreements/{agreement}/oficios', [OficioController::class, 'create'])->name('agreements.oficios.create');
+    Route::post('/agreements/{agreement}/oficios', [OficioController::class, 'store'])->name('agreements.oficios.store');
+    Route::post('/agreements/{agreement}/expediente-final', [OficioController::class, 'generateExpedienteFinal'])->name('agreements.expediente-final');
+    Route::get('/oficios/{oficio}/download', [OficioController::class, 'download'])->name('oficios.download');
 
     // Módulo de Instituciones
     Route::resource('institutions', InstitutionController::class);
