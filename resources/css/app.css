@@ -23,6 +23,7 @@
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
 
+    --color-green-50: #e8f5e9;
     --color-green-100: #34d399;
     --color-green-200: #10b981;
     --color-green-300: #059669;
@@ -31,18 +32,20 @@
     --color-green-600: #034d3a;
     --color-green-700: #023d2d;
     --color-green-800: #012d20;
+    --color-green-900: #001e15;
+    --color-green-950: #000f0a;
 
-    --color-yellow-50: #fff9db; 
+    --color-yellow-50: #fff9db;
     --color-yellow-100: #fff3c4;
-    --color-yellow-200: #fef08a;
-    --color-yellow-300: #fef08a;
-    --color-yellow-400: #fef08a;
+    --color-yellow-200: #ffe68a;
+    --color-yellow-300: #fdd835;
+    --color-yellow-400: #f5c500;
     --color-yellow-500: #dfa304;
-    --color-yellow-600: #fbbf24;
-    --color-yellow-700: #f59e0b;
-    --color-yellow-800: #d97706;
-    --color-yellow-900: #b45309;
-    --color-yellow-950: #78350f;
+    --color-yellow-600: #c68600;
+    --color-yellow-700: #a16207;
+    --color-yellow-800: #854d0e;
+    --color-yellow-900: #713f12;
+    --color-yellow-950: #422006;
 
 
     --color-accent: var(--color-zinc-100);
@@ -54,7 +57,7 @@
     .dark {
         --color-accent: var(--color-yellow-600);
         --color-accent-content: var(--color-zinc-50);
-        --color-accent-foreground: var(--color-neutral-800);
+        --color-accent-foreground: var(--color-zinc-800);
     }
 }
 
@@ -109,23 +112,16 @@
     color: var(--color-zinc-200);
 }
 
-/* Selecciona el Heading de Flux específicamente */
 [data-flux-heading] {
-    color: var(--color-zinc-100);
+    color: var(--color-zinc-800);
 }
 
-/* Selecciona el Subheading de Flux específicamente */
-[data-flux-subheading] {
-    color: var(--color-zinc-200);
-}
-
-/* Si quieres que cambien en Modo Oscuro */
 .dark [data-flux-heading] {
     color: var(--color-zinc-200);
 }
 
-[data-flux-heading] {
-    color: var(--color-zinc-800);
+[data-flux-subheading] {
+    color: var(--color-zinc-200);
 }
 
 /* Color de fondo del Sidebar */
