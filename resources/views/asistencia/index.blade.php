@@ -1,0 +1,121 @@
+<x-layouts::app :title="__('Asistencia')">
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+
+        {{-- Header --}}
+        <div class="flex items-center justify-between">
+            <div>
+                <flux:heading size="xl" level="1">Control de Asistencia</flux:heading>
+                <flux:subheading class="mt-1">Registro de entrada y salida de practicantes</flux:subheading>
+            </div>
+        </div>
+
+        {{-- Formulario de Entrada --}}
+        <flux:card>
+            <form action="{{ route('asistencia.store') }}" method="POST" class="flex flex-col sm:flex-row items-end sm:items-center gap-4"
+                  x-data="{ submitting: false }" x-on:submit="submitting = true">
+                @csrf
+                <div class="flex-1 w-full">
+                    <flux:label class="font-bold">Nombre del Practicante</flux:label>
+                    <flux:input name="nombre" placeholder="NOMBRES Y APELLIDOS" required
+                                class="uppercase w-full"
+                                oninput="this.value = this.value.toUpperCase()"
+                                autocomplete="off" />
+                </div>
+                <flux:button type="submit" variant="primary" icon="arrow-right-on-rectangle" class="w-full sm:w-auto shrink-0 bg-blue-600 hover:bg-blue-700"
+                            x-bind:disabled="submitting">
+                    <span x-show="!submitting">Marcar Entrada</span>
+                    <span x-show="submitting">Registrando...</span>
+                </flux:button>
+            </form>
+        </flux:card>
+
+        {{-- Selector de Fecha --}}
+        <div class="flex items-center gap-3">
+            <flux:icon name="calendar" variant="mini" class="size-5 text-zinc-400" />
+            <form action="{{ route('asistencia.index') }}" method="GET" class="flex items-center gap-2">
+                <input type="date" name="fecha" value="{{ $fecha }}"
+                       onchange="this.form.submit()"
+                       class="text-sm border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-1.5 bg-white dark:bg-zinc-800" />
+                <flux:text class="text-xs text-zinc-500">{{ \Carbon\Carbon::parse($fecha)->isoFormat('dddd D [de] MMMM [de] YYYY') }}</flux:text>
+            </form>
+        </div>
+
+        {{-- Tabla de Registros --}}
+        <flux:card class="p-0 shadow-sm">
+            @if($registros->isEmpty())
+                <div class="py-16 flex flex-col items-center justify-center text-zinc-400">
+                    <flux:icon name="clipboard-document-list" variant="outline" class="size-12 mb-3" />
+                    <p class="text-sm font-medium">No hay registros para esta fecha</p>
+                    <p class="text-xs mt-1">Usa el formulario de arriba para marcar la entrada de un practicante.</p>
+                </div>
+            @else
+                <flux:table>
+                    <flux:table.columns>
+                        <flux:table.column class="bg-zinc-50 dark:bg-zinc-800/60 py-4 font-bold uppercase text-[10px] tracking-widest text-zinc-500">N°</flux:table.column>
+                        <flux:table.column class="bg-zinc-50 dark:bg-zinc-800/60 py-4 font-bold uppercase text-[10px] tracking-widest text-zinc-500">Nombre</flux:table.column>
+                        <flux:table.column class="bg-zinc-50 dark:bg-zinc-800/60 py-4 font-bold uppercase text-[10px] tracking-widest text-zinc-500 text-center">Entrada</flux:table.column>
+                        <flux:table.column class="bg-zinc-50 dark:bg-zinc-800/60 py-4 font-bold uppercase text-[10px] tracking-widest text-zinc-500 text-center">Salida</flux:table.column>
+                        <flux:table.column class="bg-zinc-50 dark:bg-zinc-800/60 py-4 text-right pr-6"></flux:table.column>
+                    </flux:table.columns>
+                    <flux:table.rows>
+                        @foreach($registros as $i => $r)
+                            <flux:table.row class="hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors">
+                                <flux:table.cell class="text-xs text-zinc-400 font-mono">{{ $i + 1 }}</flux:table.cell>
+                                <flux:table.cell>
+                                    <span class="font-bold text-sm text-zinc-800 dark:text-zinc-200">{{ $r->nombre }}</span>
+                                </flux:table.cell>
+                                <flux:table.cell class="text-center">
+                                    <span class="inline-flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400">
+                                        <flux:icon name="arrow-right-on-rectangle" variant="mini" class="size-3.5" />
+                                        {{ $r->hora_entrada ? $r->hora_entrada->format('H:i') : '---' }}
+                                    </span>
+                                </flux:table.cell>
+                                <flux:table.cell class="text-center">
+                                    @if($r->hora_salida)
+                                        <span class="inline-flex items-center gap-1 text-xs font-bold text-green-600 dark:text-green-400">
+                                            <flux:icon name="arrow-left-on-rectangle" variant="mini" class="size-3.5" />
+                                            {{ $r->hora_salida->format('H:i') }}
+                                        </span>
+                                    @else
+                                        <span class="text-xs text-zinc-400 italic">Pendiente</span>
+                                    @endif
+                                </flux:table.cell>
+                                <flux:table.cell class="text-right pr-6">
+                                    @unless($r->hora_salida)
+                                        <form action="{{ route('asistencia.salida', $r->id) }}" method="POST" class="inline">
+                                            @csrf @method('PATCH')
+                                            <flux:button type="submit" size="sm" variant="primary" icon="arrow-left-on-rectangle" class="bg-green-600 hover:bg-green-700 text-xs">
+                                                Salida
+                                            </flux:button>
+                                        </form>
+                                    @endunless
+                                    <form action="{{ route('asistencia.destroy', $r->id) }}" method="POST" class="inline"
+                                          onsubmit="return confirm('Eliminar registro de {{ $r->nombre }}?')">
+                                        @csrf @method('DELETE')
+                                        <flux:button type="submit" size="sm" variant="ghost" icon="trash" class="text-red-400 hover:text-red-600" />
+                                    </form>
+                                </flux:table.cell>
+                            </flux:table.row>
+                        @endforeach
+                    </flux:table.rows>
+                </flux:table>
+            @endif
+        </flux:card>
+
+        {{-- Historial por fecha --}}
+        @if($todasFechas->count() > 1)
+        <flux:card class="bg-zinc-50 dark:bg-zinc-800/50">
+            <flux:heading size="sm" class="mb-3">Historial por fecha</flux:heading>
+            <div class="flex flex-wrap gap-1.5">
+                @foreach($todasFechas as $f)
+                    <a href="{{ route('asistencia.index', ['fecha' => $f]) }}"
+                       class="px-3 py-1 text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors {{ $f === $fecha ? 'ring-2 ring-blue-500' : '' }}">
+                        {{ \Carbon\Carbon::parse($f)->format('d/m/Y') }}
+                    </a>
+                @endforeach
+            </div>
+        </flux:card>
+        @endif
+
+    </div>
+</x-layouts::app>

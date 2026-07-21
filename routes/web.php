@@ -51,8 +51,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Módulo de Instituciones
     Route::resource('institutions', InstitutionController::class);
 
-    // Reportes e Indicadores (Corregido: Usando solo el controlador para que funcione la búsqueda)
+    // Reportes e Indicadores
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+
+    // Módulo de Asistencia
+    Route::controller(\App\Http\Controllers\AsistenciaController::class)->group(function () {
+        Route::get('/asistencia', 'index')->name('asistencia.index');
+        Route::post('/asistencia', 'store')->name('asistencia.store');
+        Route::patch('/asistencia/{asistencia}/salida', 'marcarSalida')->name('asistencia.salida');
+        Route::delete('/asistencia/{asistencia}', 'destroy')->name('asistencia.destroy');
+    });
 });
 
 require __DIR__.'/settings.php';
