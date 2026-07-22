@@ -18,6 +18,11 @@
                   x-data="{ submitting: false }" x-on:submit="submitting = true">
                 @csrf
                 <div class="flex-1 w-full">
+                    @if($errors->has('error'))
+                        <div class="mb-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 p-2 rounded-lg font-medium border border-red-200 dark:border-red-800">
+                            {{ $errors->first('error') }}
+                        </div>
+                    @endif
                     <flux:label class="font-bold">Practicante</flux:label>
                     <flux:select name="practicante_id" searchable placeholder="Buscar practicante..." required class="dark:bg-zinc-800/50">
                         @foreach($practicantes as $practicante)
@@ -66,7 +71,9 @@
                             <flux:table.row class="hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors">
                                 <flux:table.cell class="text-xs text-zinc-400 font-mono">{{ $i + 1 }}</flux:table.cell>
                                 <flux:table.cell>
-                                    <span class="font-bold text-sm text-zinc-800 dark:text-zinc-200">{{ $r->practicante->nombre }}</span>
+                                    <a href="{{ route('practicantes.show', $r->practicante_id) }}" class="font-bold text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors">
+                                        {{ $r->practicante->nombre }}
+                                    </a>
                                 </flux:table.cell>
                                 <flux:table.cell class="text-center">
                                     <span class="inline-flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400">
@@ -136,6 +143,11 @@
                     <flux:label>Nombre Completo</flux:label>
                     <flux:input name="nombre" placeholder="Ej. JUAN PEREZ" required class="uppercase" oninput="this.value = this.value.toUpperCase()" autocomplete="off" />
                     <flux:error name="nombre" />
+                </flux:field>
+                <flux:field>
+                    <flux:label>DNI</flux:label>
+                    <flux:input name="dni" placeholder="Ej. 12345678" required maxlength="8" pattern="\d{8}" title="Debe contener 8 dígitos" autocomplete="off" />
+                    <flux:error name="dni" />
                 </flux:field>
                 <div class="flex justify-end gap-2 mt-2">
                     <flux:modal.close>

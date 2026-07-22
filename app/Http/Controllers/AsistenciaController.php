@@ -32,10 +32,20 @@ class AsistenciaController extends Controller
         ]);
 
         $practicante = \App\Models\Practicante::find($validated['practicante_id']);
+        $fechaActual = now()->format('Y-m-d');
+
+        // Check if already registered today
+        $existing = Asistencia::where('practicante_id', $practicante->id)
+            ->whereDate('fecha', $fechaActual)
+            ->first();
+
+        if ($existing) {
+            return back()->withErrors(['error' => 'El practicante ya tiene una asistencia registrada para el día de hoy.']);
+        }
 
         $registro = Asistencia::create([
             'practicante_id' => $practicante->id,
-            'fecha' => now()->format('Y-m-d'),
+            'fecha' => $fechaActual,
             'hora_entrada' => now()->format('H:i:s'),
         ]);
 

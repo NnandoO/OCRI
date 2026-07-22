@@ -8,6 +8,7 @@ class Practicante extends Model
 {
     protected $fillable = [
         'nombre',
+        'dni',
     ];
 
     public function asistencias()
