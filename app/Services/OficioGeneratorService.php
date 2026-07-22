@@ -139,13 +139,13 @@ class OficioGeneratorService
             $entradas = $item->documents->where('type', 'entrada')->sortByDesc('created_at');
             $salidas = $item->documents->where('type', 'salida')->sortByDesc('created_at');
 
-            foreach ($entradas as $doc) {
+            foreach ($salidas as $doc) {
                 $p = storage_path('app/public/' . $doc->file_path);
                 if (file_exists($p) && strtolower($doc->extension) === 'pdf') {
                     $documentosAdjuntar[$p] = $doc->original_name;
                 }
             }
-            foreach ($salidas as $doc) {
+            foreach ($entradas as $doc) {
                 $p = storage_path('app/public/' . $doc->file_path);
                 if (file_exists($p) && strtolower($doc->extension) === 'pdf') {
                     $documentosAdjuntar[$p] = $doc->original_name;
