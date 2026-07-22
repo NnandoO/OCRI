@@ -12,20 +12,21 @@ class PracticanteController extends Controller
         $validated = $request->validate([
             'nombre' => 'required|string|max:255|unique:practicantes,nombre',
             'dni' => 'required|string|size:8|unique:practicantes,dni',
+            'email' => 'required|email|max:255|unique:users,email'
         ], [
             'nombre.unique' => 'Este practicante ya se encuentra registrado en el sistema.',
-            'dni.unique' => 'Este DNI ya está registrado en el sistema.'
+            'dni.unique' => 'Este DNI ya está registrado en el sistema.',
+            'email.unique' => 'Este correo ya está en uso por otro usuario.'
         ]);
 
         $nombre = strtoupper(trim($validated['nombre']));
         $dni = $validated['dni'];
+        $email = $validated['email'];
 
         Practicante::create([
             'nombre' => $nombre,
             'dni' => $dni,
         ]);
-
-        $email = "{$dni}@practicante.uncp.edu.pe";
 
         // Crear usuario para que el practicante inicie sesión
         if (!\App\Models\User::where('email', $email)->exists()) {

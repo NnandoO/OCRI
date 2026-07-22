@@ -89,6 +89,11 @@ class OficioGeneratorService
 
         $pdf->save($fullPath);
 
+        // Si es oficio final, fusionar los documentos adjuntos
+        if ($oficio->type === 'final') {
+            $this->mergeExpedienteFinal($oficio, $fullPath);
+        }
+
         // Update status if it was draft
         if ($oficio->status === 'draft') {
             $oficio->update(['status' => 'generated']);
@@ -112,6 +117,90 @@ class OficioGeneratorService
                     'extension' => 'pdf',
                 ]);
             }
+        }
+    }
+
+    protected function mergeExpedienteFinal(Oficio $oficio, string $basePdfPath): void
+    {
+        $agreement = $oficio->agreement;
+        $agreement->load('roadmapItems.documents');
+
+        // Mismo orden usado en OficioController: del mas reciente al mas antiguo
+        $items = $agreement->roadmapItems->reject(function($i) {
+            return strtolower(trim($i->area_name)) === 'rectorado';
+        })->sortByDesc(function($item) {
+            $latest = $item->documents->sortByDesc('created_at')->first();
+            return $latest ? $latest->created_at : $item->created_at;
+        });
+
+        $documentosAdjuntar = [];
+
+        foreach ($items as $item) {
+            $entradas = $item->documents->where('type', 'entrada')->sortByDesc('created_at');
+            $salidas = $item->documents->where('type', 'salida')->sortByDesc('created_at');
+
+            foreach ($entradas as $doc) {
+                $p = storage_path('app/public/' . $doc->file_path);
+                if (file_exists($p) && strtolower($doc->extension) === 'pdf') {
+                    $documentosAdjuntar[$p] = $doc->original_name;
+                }
+            }
+            foreach ($salidas as $doc) {
+                $p = storage_path('app/public/' . $doc->file_path);
+                if (file_exists($p) && strtolower($doc->extension) === 'pdf') {
+                    $documentosAdjuntar[$p] = $doc->original_name;
+                }
+            }
+        }
+
+        if (empty($documentosAdjuntar)) {
+            return;
+        }
+
+        try {
+            $mergedPdf = new \setasign\Fpdi\Fpdi();
+
+            // 1. Agregar el Oficio Principal
+            $pageCount = $mergedPdf->setSourceFile($basePdfPath);
+            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                $templateId = $mergedPdf->importPage($pageNo);
+                $size = $mergedPdf->getTemplateSize($templateId);
+                $mergedPdf->AddPage($size['orientation'], $size);
+                $mergedPdf->useTemplate($templateId);
+            }
+
+            // 2. Agregar los Adjuntos
+            foreach ($documentosAdjuntar as $docPath => $docName) {
+                try {
+                    $pageCount = $mergedPdf->setSourceFile($docPath);
+                    for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                        $templateId = $mergedPdf->importPage($pageNo);
+                        $size = $mergedPdf->getTemplateSize($templateId);
+                        $mergedPdf->AddPage($size['orientation'], $size);
+                        $mergedPdf->useTemplate($templateId);
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("[Fusión Resiliente] No se pudo fusionar el archivo: {$docPath}. Error: " . $e->getMessage());
+                    
+                    // Página de Advertencia
+                    $mergedPdf->AddPage();
+                    $mergedPdf->SetFont('Arial', 'B', 12);
+                    $mergedPdf->SetTextColor(255, 0, 0);
+                    $mergedPdf->Cell(0, 10, 'ADVERTENCIA DEL SISTEMA:', 0, 1, 'C');
+                    $mergedPdf->SetFont('Arial', '', 10);
+                    $mergedPdf->SetTextColor(0, 0, 0);
+                    $mensaje = utf8_decode("El documento adjunto '{$docName}' no pudo ser procesado automáticamente.\n\nMotivo: El formato de compresión del PDF no es compatible con el motor de fusión gratuito.\n\nPor favor, imprima este archivo o adjúntelo manualmente al expediente digital.");
+                    $mergedPdf->MultiCell(0, 8, $mensaje);
+                }
+            }
+
+            // Sobreescribir el archivo original con el archivo fusionado
+            $mergedPdf->Output('F', $basePdfPath);
+            Log::info("[Expediente Final] Fusionado correctamente: {$basePdfPath}");
+
+        } catch (\Exception $e) {
+            Log::error("Error al fusionar Expediente Final: " . $e->getMessage());
+            // Si el motor falla catastróficamente con el oficio principal, lo dejamos como estaba.
         }
     }
 

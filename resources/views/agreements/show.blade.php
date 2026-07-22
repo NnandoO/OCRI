@@ -479,15 +479,19 @@
                             </div>
                         @endif
 
-                        @if($agreement->documents->isEmpty())
+                        @php
+                            $mainDocuments = $agreement->documents->reject(fn($d) => str_contains($d->name, 'Expediente Final a Rectorado'));
+                        @endphp
+
+                        @if($mainDocuments->isEmpty())
                             <div class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl bg-zinc-50 dark:bg-zinc-800/50">
                                 <flux:icon name="document-magnifying-glass" class="size-10 text-zinc-300 mb-3" />
-                                <p class="text-sm font-medium text-zinc-500">No hay documentos finales en el acervo.</p>
-                                <p class="text-xs text-zinc-400 mt-1">Suba el convenio principal o una las opiniones de la hoja de ruta.</p>
+                                <p class="text-sm font-medium text-zinc-500">No hay convenios firmados en el acervo.</p>
+                                <p class="text-xs text-zinc-400 mt-1">Suba el convenio principal firmado.</p>
                             </div>
                         @else
-                            {{-- Solo mostramos los Documentos Principales ($agreement->documents) --}}
-                            @foreach($agreement->documents as $doc)
+                            {{-- Solo mostramos los Documentos Principales --}}
+                            @foreach($mainDocuments as $doc)
                                 @php
                                     $isConsolidated = str_contains($doc->name, 'Solo Opiniones');
                                     $isHistorical = str_contains($doc->name, 'Histórico');

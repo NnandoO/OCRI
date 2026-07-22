@@ -155,7 +155,7 @@
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Registrar Nuevo Practicante</flux:heading>
-                <flux:subheading>Ingresa los nombres y apellidos del practicante.</flux:subheading>
+                <flux:subheading>Ingresa los datos del practicante. El sistema creará una cuenta usando su DNI como contraseña.</flux:subheading>
             </div>
             <form action="{{ route('practicantes.store') }}" method="POST" class="space-y-4">
                 @csrf
@@ -163,6 +163,11 @@
                     <flux:label>Nombre Completo</flux:label>
                     <flux:input name="nombre" placeholder="Ej. JUAN PEREZ" required class="uppercase" oninput="this.value = this.value.toUpperCase()" autocomplete="off" />
                     <flux:error name="nombre" />
+                </flux:field>
+                <flux:field>
+                    <flux:label>Correo Electrónico</flux:label>
+                    <flux:input type="email" name="email" placeholder="Ej. juan@gmail.com" required autocomplete="off" />
+                    <flux:error name="email" />
                 </flux:field>
                 <flux:field>
                     <flux:label>DNI</flux:label>
