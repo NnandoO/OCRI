@@ -15,6 +15,8 @@ class Oficio extends Model
         'file_path',
         'file_original_name',
         'type',
+        'body_html',
+        'status',
     ];
 
     public function agreement()

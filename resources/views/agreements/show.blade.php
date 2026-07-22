@@ -172,6 +172,32 @@
                                 </flux:button>
                             @endif
                         </div>
+
+                        {{-- Banderolas de Oficios en Borrador --}}
+                        @php
+                            $draftOficios = $agreement->oficios()->where('status', 'draft')->get();
+                        @endphp
+                        @if($draftOficios->count() > 0)
+                            <div class="mb-6 space-y-3">
+                                <flux:heading size="sm" class="text-amber-600 dark:text-amber-500 mb-2 flex items-center gap-2">
+                                    <flux:icon name="exclamation-circle" variant="mini" class="size-4" />
+                                    Oficios Pendientes de Generación (Borrador)
+                                </flux:heading>
+                                @foreach($draftOficios as $draftOficio)
+                                    <div class="flex flex-col sm:flex-row items-center justify-between bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-700/50 p-3 rounded-lg">
+                                        <div class="flex-1 mb-2 sm:mb-0">
+                                            <p class="text-sm font-bold text-amber-800 dark:text-amber-400">OFICIO N° {{ $draftOficio->oficio_number }} ({{ $draftOficio->area_name }})</p>
+                                            <p class="text-xs text-amber-600 dark:text-amber-500">Dirigido a: {{ $draftOficio->directed_to }}</p>
+                                        </div>
+                                        <div class="shrink-0">
+                                            <flux:button href="{{ route('oficios.edit', $draftOficio->id) }}" size="sm" variant="primary" class="bg-amber-600 hover:bg-amber-700 text-white border-none" icon="pencil-square">
+                                                Revisar y Generar PDF
+                                            </flux:button>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
                         
                         <div class="space-y-3">
                             @foreach($agreement->roadmapItems as $item)

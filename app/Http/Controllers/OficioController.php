@@ -141,4 +141,26 @@ class OficioController extends Controller
             $oficio->file_original_name
         );
     }
+
+    public function edit(Oficio $oficio)
+    {
+        return view('agreements.oficio_edit', compact('oficio'));
+    }
+
+    public function update(Request $request, Oficio $oficio)
+    {
+        $validated = $request->validate([
+            'body_html' => 'required|string',
+        ]);
+
+        $oficio->update([
+            'body_html' => $validated['body_html'],
+        ]);
+
+        // Generate the PDF
+        $this->oficioGenerator->renderAndSavePdf($oficio);
+
+        return redirect()->route('agreements.show', $oficio->agreement_id)
+            ->with('status', 'Oficio generado correctamente en PDF.');
+    }
 }

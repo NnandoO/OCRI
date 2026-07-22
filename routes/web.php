@@ -47,6 +47,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/agreements/{agreement}/oficios', [OficioController::class, 'store'])->name('agreements.oficios.store');
     Route::post('/agreements/{agreement}/expediente-final', [OficioController::class, 'generateExpedienteFinal'])->name('agreements.expediente-final');
     Route::get('/oficios/{oficio}/download', [OficioController::class, 'download'])->name('oficios.download');
+    Route::get('/oficios/{oficio}/edit', [OficioController::class, 'edit'])->name('oficios.edit');
+    Route::put('/oficios/{oficio}', [OficioController::class, 'update'])->name('oficios.update');
 
     // Módulo de Instituciones
     Route::resource('institutions', InstitutionController::class);
