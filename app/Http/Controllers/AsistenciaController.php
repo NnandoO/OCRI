@@ -11,7 +11,8 @@ class AsistenciaController extends Controller
     {
         $fecha = $request->query('fecha', now()->format('Y-m-d'));
 
-        $registros = Asistencia::whereDate('fecha', $fecha)
+        $registros = Asistencia::with('practicante')
+            ->whereDate('fecha', $fecha)
             ->orderBy('hora_entrada')
             ->get();
 
@@ -19,25 +20,27 @@ class AsistenciaController extends Controller
             ->orderByDesc('fecha')
             ->pluck('fecha');
 
-        return view('asistencia.index', compact('registros', 'todasFechas', 'fecha'));
+        $practicantes = \App\Models\Practicante::orderBy('nombre')->get();
+
+        return view('asistencia.index', compact('registros', 'todasFechas', 'fecha', 'practicantes'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nombre' => 'required|string|max:255',
+            'practicante_id' => 'required|exists:practicantes,id',
         ]);
 
-        $nombre = strtoupper(trim($validated['nombre']));
+        $practicante = \App\Models\Practicante::find($validated['practicante_id']);
 
         $registro = Asistencia::create([
-            'nombre' => $nombre,
+            'practicante_id' => $practicante->id,
             'fecha' => now()->format('Y-m-d'),
             'hora_entrada' => now()->format('H:i:s'),
         ]);
 
         return redirect()->route('asistencia.index')
-            ->with('status', "Entrada registrada: {$nombre} a las {$registro->hora_entrada->format('H:i')}");
+            ->with('status', "Entrada registrada: {$practicante->nombre} a las {$registro->hora_entrada->format('H:i')}");
     }
 
     public function marcarSalida(Asistencia $asistencia)
@@ -51,12 +54,12 @@ class AsistenciaController extends Controller
         ]);
 
         return redirect()->route('asistencia.index')
-            ->with('status', "Salida registrada: {$asistencia->nombre} a las {$asistencia->hora_salida->format('H:i')}");
+            ->with('status', "Salida registrada: {$asistencia->practicante->nombre} a las {$asistencia->hora_salida->format('H:i')}");
     }
 
     public function destroy(Asistencia $asistencia)
     {
-        $nombre = $asistencia->nombre;
+        $nombre = $asistencia->practicante->nombre;
         $asistencia->delete();
 
         return redirect()->route('asistencia.index')

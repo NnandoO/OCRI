@@ -7,6 +7,9 @@
                 <flux:heading size="xl" level="1">Control de Asistencia</flux:heading>
                 <flux:subheading class="mt-1">Registro de entrada y salida de practicantes</flux:subheading>
             </div>
+            <flux:modal.trigger name="nuevo-practicante">
+                <flux:button icon="plus" class="shrink-0" size="sm">Nuevo Practicante</flux:button>
+            </flux:modal.trigger>
         </div>
 
         {{-- Formulario de Entrada --}}
@@ -15,11 +18,12 @@
                   x-data="{ submitting: false }" x-on:submit="submitting = true">
                 @csrf
                 <div class="flex-1 w-full">
-                    <flux:label class="font-bold">Nombre del Practicante</flux:label>
-                    <flux:input name="nombre" placeholder="NOMBRES Y APELLIDOS" required
-                                class="uppercase w-full"
-                                oninput="this.value = this.value.toUpperCase()"
-                                autocomplete="off" />
+                    <flux:label class="font-bold">Practicante</flux:label>
+                    <flux:select name="practicante_id" searchable placeholder="Buscar practicante..." required class="dark:bg-zinc-800/50">
+                        @foreach($practicantes as $practicante)
+                            <flux:select.option value="{{ $practicante->id }}">{{ $practicante->nombre }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
                 </div>
                 <flux:button type="submit" variant="primary" icon="arrow-right-end-on-rectangle" class="w-full sm:w-auto shrink-0 bg-blue-600 hover:bg-blue-700"
                             x-bind:disabled="submitting">
@@ -62,7 +66,7 @@
                             <flux:table.row class="hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors">
                                 <flux:table.cell class="text-xs text-zinc-400 font-mono">{{ $i + 1 }}</flux:table.cell>
                                 <flux:table.cell>
-                                    <span class="font-bold text-sm text-zinc-800 dark:text-zinc-200">{{ $r->nombre }}</span>
+                                    <span class="font-bold text-sm text-zinc-800 dark:text-zinc-200">{{ $r->practicante->nombre }}</span>
                                 </flux:table.cell>
                                 <flux:table.cell class="text-center">
                                     <span class="inline-flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400">
@@ -90,7 +94,7 @@
                                         </form>
                                     @endunless
                                     <form action="{{ route('asistencia.destroy', $r->id) }}" method="POST" class="inline"
-                                          onsubmit="return confirm('Eliminar registro de {{ $r->nombre }}?')">
+                                          onsubmit="return confirm('Eliminar registro de {{ $r->practicante->nombre }}?')">
                                         @csrf @method('DELETE')
                                         <flux:button type="submit" size="sm" variant="ghost" icon="trash" class="text-red-400 hover:text-red-600" />
                                     </form>
@@ -118,4 +122,28 @@
         @endif
 
     </div>
+
+    {{-- Modal para Registrar Nuevo Practicante --}}
+    <flux:modal name="nuevo-practicante" class="md:w-[500px]">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Registrar Nuevo Practicante</flux:heading>
+                <flux:subheading>Ingresa los nombres y apellidos del practicante.</flux:subheading>
+            </div>
+            <form action="{{ route('practicantes.store') }}" method="POST" class="space-y-4">
+                @csrf
+                <flux:field>
+                    <flux:label>Nombre Completo</flux:label>
+                    <flux:input name="nombre" placeholder="Ej. JUAN PEREZ" required class="uppercase" oninput="this.value = this.value.toUpperCase()" autocomplete="off" />
+                    <flux:error name="nombre" />
+                </flux:field>
+                <div class="flex justify-end gap-2 mt-2">
+                    <flux:modal.close>
+                        <flux:button variant="ghost">Cancelar</flux:button>
+                    </flux:modal.close>
+                    <flux:button type="submit" variant="primary">Guardar</flux:button>
+                </div>
+            </form>
+        </div>
+    </flux:modal>
 </x-layouts::app>

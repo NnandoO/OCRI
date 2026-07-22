@@ -9,7 +9,7 @@ class Asistencia extends Model
     protected $table = 'asistencia';
 
     protected $fillable = [
-        'nombre',
+        'practicante_id',
         'fecha',
         'hora_entrada',
         'hora_salida',
@@ -22,5 +22,10 @@ class Asistencia extends Model
             'hora_entrada' => 'datetime:H:i',
             'hora_salida' => 'datetime:H:i',
         ];
+    }
+
+    public function practicante()
+    {
+        return $this->belongsTo(Practicante::class);
     }
 }

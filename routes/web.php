@@ -61,6 +61,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/asistencia/{asistencia}/salida', 'marcarSalida')->name('asistencia.salida');
         Route::delete('/asistencia/{asistencia}', 'destroy')->name('asistencia.destroy');
     });
+
+    Route::post('/practicantes', [\App\Http\Controllers\PracticanteController::class, 'store'])->name('practicantes.store');
 });
 
 require __DIR__.'/settings.php';
