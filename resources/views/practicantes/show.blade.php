@@ -2,14 +2,20 @@
     <div class="p-6 max-w-5xl mx-auto space-y-6">
 
         {{-- Header --}}
-        <div class="flex items-center gap-4">
-            <flux:button href="{{ route('asistencia.index') }}" variant="ghost" icon="arrow-left" class="shrink-0" />
-            <div>
-                <flux:heading size="xl" level="1">{{ $practicante->nombre }}</flux:heading>
-                <flux:subheading class="mt-1">
-                    {{ $practicante->dni ? 'DNI: ' . $practicante->dni : 'DNI no registrado' }} &bull; Resumen de Asistencia y Horas Acumuladas
-                </flux:subheading>
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <flux:button href="{{ route('asistencia.index') }}" variant="ghost" icon="arrow-left" class="shrink-0" />
+                <div>
+                    <flux:heading size="xl" level="1">{{ $practicante->nombre }}</flux:heading>
+                    <flux:subheading class="mt-1">
+                        {{ $practicante->dni ? 'DNI: ' . $practicante->dni : 'DNI no registrado' }} &bull; Resumen de Asistencia y Horas Acumuladas
+                    </flux:subheading>
+                </div>
             </div>
+            
+            <flux:button href="{{ route('practicantes.export', $practicante) }}" variant="primary" icon="document-arrow-down" class="bg-emerald-600 hover:bg-emerald-700">
+                Exportar Excel
+            </flux:button>
         </div>
 
         {{-- Stats --}}

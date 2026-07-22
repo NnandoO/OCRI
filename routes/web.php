@@ -64,6 +64,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/practicantes', [\App\Http\Controllers\PracticanteController::class, 'store'])->name('practicantes.store');
     Route::get('/practicantes/{practicante}', [\App\Http\Controllers\PracticanteController::class, 'show'])->name('practicantes.show');
+    Route::get('/practicantes/{practicante}/export', [\App\Http\Controllers\PracticanteController::class, 'export'])->name('practicantes.export');
 });
 
 require __DIR__.'/settings.php';
