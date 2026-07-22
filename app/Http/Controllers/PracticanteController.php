@@ -18,13 +18,29 @@ class PracticanteController extends Controller
         ]);
 
         $nombre = strtoupper(trim($validated['nombre']));
+        $dni = $validated['dni'];
 
         Practicante::create([
             'nombre' => $nombre,
-            'dni' => $validated['dni'],
+            'dni' => $dni,
         ]);
 
-        return redirect()->route('asistencia.index')->with('status', 'Practicante registrado exitosamente.');
+        $email = "{$dni}@practicante.uncp.edu.pe";
+
+        // Crear usuario para que el practicante inicie sesión
+        if (!\App\Models\User::where('email', $email)->exists()) {
+            \App\Models\User::create([
+                'name' => mb_convert_case($nombre, MB_CASE_TITLE, "UTF-8"),
+                'email' => $email,
+                'password' => \Illuminate\Support\Facades\Hash::make($dni),
+                'role' => 'practicante'
+            ]);
+        }
+
+        return redirect()->route('asistencia.index')->with('status', 'Practicante registrado exitosamente.')->with('credentials', [
+            'email' => $email,
+            'password' => $dni
+        ]);
     }
 
     public function show(Practicante $practicante)

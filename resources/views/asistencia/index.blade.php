@@ -12,6 +12,26 @@
             </flux:modal.trigger>
         </div>
 
+        {{-- Credentials Alert --}}
+        @if(session('credentials'))
+            <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 flex gap-4 items-start shadow-sm">
+                <flux:icon name="check-circle" class="size-6 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
+                <div>
+                    <h3 class="text-sm font-bold text-green-800 dark:text-green-400">Practicante registrado y cuenta creada</h3>
+                    <p class="text-sm text-green-700 dark:text-green-300 mt-1">
+                        Se ha generado una cuenta para que el practicante pueda iniciar sesión y ver su historial de horas:
+                    </p>
+                    <ul class="mt-2 space-y-1 text-sm text-green-800 dark:text-green-300 font-mono bg-white dark:bg-green-950/50 p-3 rounded-lg border border-green-200 dark:border-green-800">
+                        <li><strong>Correo:</strong> {{ session('credentials')['email'] }}</li>
+                        <li><strong>Contraseña:</strong> {{ session('credentials')['password'] }}</li>
+                    </ul>
+                    <p class="text-xs text-green-600 dark:text-green-500 mt-2 italic">
+                        Por favor, entrégale estas credenciales al practicante.
+                    </p>
+                </div>
+            </div>
+        @endif
+
         {{-- Formulario de Entrada --}}
         <flux:card>
             <form action="{{ route('asistencia.store') }}" method="POST" class="flex flex-col sm:flex-row items-end sm:items-center gap-4"

@@ -80,4 +80,14 @@ class Agreement extends Model
     {
         return $this->hasMany(Oficio::class);
     }
+
+    public function workPlan()
+    {
+        return $this->hasOne(WorkPlan::class);
+    }
+
+    public function reports(): HasMany
+    {
+        return $this->hasMany(AgreementReport::class)->orderByDesc('date');
+    }
 }

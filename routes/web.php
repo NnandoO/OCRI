@@ -56,17 +56,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Reportes e Indicadores
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 
-    // Módulo de Asistencia
-    Route::controller(\App\Http\Controllers\AsistenciaController::class)->group(function () {
-        Route::get('/asistencia', 'index')->name('asistencia.index');
-        Route::post('/asistencia', 'store')->name('asistencia.store');
-        Route::patch('/asistencia/{asistencia}/salida', 'marcarSalida')->name('asistencia.salida');
-        Route::delete('/asistencia/{asistencia}', 'destroy')->name('asistencia.destroy');
+    // Módulo de Seguimiento
+    Route::controller(\App\Http\Controllers\SeguimientoController::class)->group(function () {
+        Route::get('/seguimiento', 'index')->name('seguimiento.index');
+        Route::get('/seguimiento/{agreement}', 'show')->name('seguimiento.show');
+        Route::post('/seguimiento/{agreement}/plan', 'storePlan')->name('seguimiento.storePlan');
+        Route::post('/seguimiento/{agreement}/report', 'storeReport')->name('seguimiento.storeReport');
     });
 
-    Route::post('/practicantes', [\App\Http\Controllers\PracticanteController::class, 'store'])->name('practicantes.store');
-    Route::get('/practicantes/{practicante}', [\App\Http\Controllers\PracticanteController::class, 'show'])->name('practicantes.show');
-    Route::get('/practicantes/{practicante}/export', [\App\Http\Controllers\PracticanteController::class, 'export'])->name('practicantes.export');
+    Route::middleware([\App\Http\Middleware\CheckAdminRole::class])->group(function () {
+        // Módulo de Asistencia
+        Route::controller(\App\Http\Controllers\AsistenciaController::class)->group(function () {
+            Route::get('/asistencia', 'index')->name('asistencia.index');
+            Route::post('/asistencia', 'store')->name('asistencia.store');
+            Route::patch('/asistencia/{asistencia}/salida', 'marcarSalida')->name('asistencia.salida');
+            Route::delete('/asistencia/{asistencia}', 'destroy')->name('asistencia.destroy');
+        });
+
+        // Módulo de Practicantes
+        Route::post('/practicantes', [\App\Http\Controllers\PracticanteController::class, 'store'])->name('practicantes.store');
+        Route::get('/practicantes/{practicante}', [\App\Http\Controllers\PracticanteController::class, 'show'])->name('practicantes.show');
+        Route::get('/practicantes/{practicante}/export', [\App\Http\Controllers\PracticanteController::class, 'export'])->name('practicantes.export');
+    });
 });
 
 require __DIR__.'/settings.php';

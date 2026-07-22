@@ -56,18 +56,29 @@
         >
             {{ __('Reportes y Estadísticas') }}
         </flux:sidebar.item>
-    </flux:sidebar.group>
-
-    <flux:sidebar.group :heading="__('Administracion')" class="grid mt-2">
+        
         <flux:sidebar.item 
-            icon="clipboard-document-list" 
-            :href="route('asistencia.index')" 
-            :current="request()->routeIs('asistencia.*')" 
+            icon="magnifying-glass-circle" 
+            :href="route('seguimiento.index')" 
+            :current="request()->routeIs('seguimiento.*')" 
             wire:navigate
         >
-            {{ __('Control de Asistencia') }}
+            {{ __('Seguimiento') }}
         </flux:sidebar.item>
     </flux:sidebar.group>
+
+    @if(auth()->check() && auth()->user()->isAdmin())
+        <flux:sidebar.group :heading="__('Administracion')" class="grid mt-2">
+            <flux:sidebar.item 
+                icon="clipboard-document-list" 
+                :href="route('asistencia.index')" 
+                :current="request()->routeIs('asistencia.*')" 
+                wire:navigate
+            >
+                {{ __('Control de Asistencia') }}
+            </flux:sidebar.item>
+        </flux:sidebar.group>
+    @endif
 </flux:sidebar.nav>
 
             <flux:spacer />
