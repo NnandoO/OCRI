@@ -21,7 +21,7 @@
                                 oninput="this.value = this.value.toUpperCase()"
                                 autocomplete="off" />
                 </div>
-                <flux:button type="submit" variant="primary" icon="arrow-right-on-rectangle" class="w-full sm:w-auto shrink-0 bg-blue-600 hover:bg-blue-700"
+                <flux:button type="submit" variant="primary" icon="arrow-right-end-on-rectangle" class="w-full sm:w-auto shrink-0 bg-blue-600 hover:bg-blue-700"
                             x-bind:disabled="submitting">
                     <span x-show="!submitting">Marcar Entrada</span>
                     <span x-show="submitting">Registrando...</span>
@@ -66,14 +66,14 @@
                                 </flux:table.cell>
                                 <flux:table.cell class="text-center">
                                     <span class="inline-flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400">
-                                        <flux:icon name="arrow-right-on-rectangle" variant="mini" class="size-3.5" />
+                                        <flux:icon name="arrow-right-end-on-rectangle" variant="mini" class="size-3.5" />
                                         {{ $r->hora_entrada ? $r->hora_entrada->format('H:i') : '---' }}
                                     </span>
                                 </flux:table.cell>
                                 <flux:table.cell class="text-center">
                                     @if($r->hora_salida)
                                         <span class="inline-flex items-center gap-1 text-xs font-bold text-green-600 dark:text-green-400">
-                                            <flux:icon name="arrow-left-on-rectangle" variant="mini" class="size-3.5" />
+                                            <flux:icon name="arrow-right-start-on-rectangle" variant="mini" class="size-3.5" />
                                             {{ $r->hora_salida->format('H:i') }}
                                         </span>
                                     @else
@@ -84,7 +84,7 @@
                                     @unless($r->hora_salida)
                                         <form action="{{ route('asistencia.salida', $r->id) }}" method="POST" class="inline">
                                             @csrf @method('PATCH')
-                                            <flux:button type="submit" size="sm" variant="primary" icon="arrow-left-on-rectangle" class="bg-green-600 hover:bg-green-700 text-xs">
+                                            <flux:button type="submit" size="sm" variant="primary" icon="arrow-right-start-on-rectangle" class="bg-green-600 hover:bg-green-700 text-xs">
                                                 Salida
                                             </flux:button>
                                         </form>
