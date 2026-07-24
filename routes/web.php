@@ -69,6 +69,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::controller(\App\Http\Controllers\AsistenciaController::class)->group(function () {
             Route::get('/asistencia', 'index')->name('asistencia.index');
             Route::post('/asistencia', 'store')->name('asistencia.store');
+            Route::post('/asistencia/regularizar', 'regularizar')->name('asistencia.regularizar');
             Route::patch('/asistencia/{asistencia}/salida', 'marcarSalida')->name('asistencia.salida');
             Route::delete('/asistencia/{asistencia}', 'destroy')->name('asistencia.destroy');
         });
