@@ -335,21 +335,24 @@
 
                         {{-- Botones de Descarga Directa --}}
                         @if($allOpinionsReady)
-                            <div class="mt-6 pt-5 border-t border-zinc-200 dark:border-zinc-700 space-y-3">
-                                @if($allOpinionsReady && $hasOficios && !$hasExpedienteFinal)
-                                    <flux:modal.trigger name="expediente-final-modal">
-                                        <flux:button 
-                                            variant="primary" 
-                                            icon="document-text" 
-                                            class="w-full bg-green-600 hover:bg-green-700">
-                                            Generar Expediente Final a Rectorado
+                            <div class="mt-6 pt-5 border-t border-zinc-200 dark:border-zinc-700 space-y-2">
+                                <div class="flex gap-2">
+                                    @if($hasOficios)
+                                        <flux:modal.trigger name="expediente-final-modal" class="flex-1">
+                                            <flux:button 
+                                                variant="primary" 
+                                                icon="document-text" 
+                                                class="w-full bg-green-600 hover:bg-green-700">
+                                                {{ $hasExpedienteFinal ? 'Regenerar' : 'Generar' }} Expediente Final
+                                            </flux:button>
+                                        </flux:modal.trigger>
+                                    @endif
+                                    @if($expedienteRectoradoDoc && \Illuminate\Support\Facades\Storage::disk('public')->exists($expedienteRectoradoDoc->file_path))
+                                        <flux:button as="a" href="{{ asset('storage/' . str_replace('\\', '/', $expedienteRectoradoDoc->file_path)) }}" target="_blank" variant="primary" icon="arrow-down-tray" class="bg-green-600 hover:bg-green-700 text-white border-none shrink-0">
+                                            Descargar
                                         </flux:button>
-                                    </flux:modal.trigger>
-                                @elseif($expedienteRectoradoDoc)
-                                    <flux:button as="a" href="{{ asset('storage/' . str_replace('\\', '/', $expedienteRectoradoDoc->file_path)) }}" target="_blank" variant="primary" icon="arrow-down-tray" class="w-full bg-green-600 hover:bg-green-700 text-white border-none">
-                                        Descargar Expediente Final a Rectorado
-                                    </flux:button>
-                                @endif
+                                    @endif
+                                </div>
 
                                 @if($convenioDoc)
                                     <flux:button as="a" href="{{ asset('storage/' . str_replace('\\', '/', $convenioDoc->file_path)) }}" target="_blank" variant="outline" icon="document-text" class="w-full">

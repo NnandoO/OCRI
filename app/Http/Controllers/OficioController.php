@@ -77,6 +77,18 @@ class OficioController extends Controller
 
         $agreement->load(['roadmapItems.documents', 'oficios']);
 
+        // Eliminar expediente final anterior (si existe) para regenerarlo
+        $oldFinal = $agreement->oficios->where('type', 'final')->first();
+        if ($oldFinal) {
+            $oldPath = storage_path('app/public/' . $oldFinal->file_path);
+            if (file_exists($oldPath)) {
+                unlink($oldPath);
+            }
+            $agreement->documents()->where('name', 'Expediente Final a Rectorado')->delete();
+            $oldFinal->delete();
+            $agreement->load('oficios'); // recargar
+        }
+
         // Obtener todos los documentos, agrupar por área, ordenar áreas por el más reciente
         $items = $agreement->roadmapItems->reject(function($i) {
             return strtolower(trim($i->area_name)) === 'rectorado';
@@ -117,6 +129,9 @@ class OficioController extends Controller
         if (empty($referenciaText)) {
             $referenciaText = "No se registran opiniones previas.";
         }
+
+        // Pasar los paths al servicio para la fusión
+        $this->oficioGenerator->setDocumentosAdjuntar($documentosAdjuntar);
 
         $oficio = $this->oficioGenerator->generateExpedienteFinal(
             $agreement,

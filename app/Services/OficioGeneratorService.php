@@ -11,6 +11,13 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class OficioGeneratorService
 {
+    protected array $documentosAdjuntar = [];
+
+    public function setDocumentosAdjuntar(array $paths): void
+    {
+        $this->documentosAdjuntar = $paths;
+    }
+
     protected function getYearName(): string
     {
         $year = date('Y');
@@ -123,35 +130,47 @@ class OficioGeneratorService
     protected function mergeExpedienteFinal(Oficio $oficio, string $basePdfPath): void
     {
         $agreement = $oficio->agreement;
-        $agreement->load('roadmapItems.documents');
-
-        $items = $agreement->roadmapItems->reject(function($i) {
-            return strtolower(trim($i->area_name)) === 'rectorado';
-        })->sortByDesc(function($item) {
-            $latest = $item->documents->sortByDesc('created_at')->first();
-            return $latest ? $latest->created_at : $item->created_at;
-        });
 
         $pdfPaths = [];
 
-        foreach ($items as $item) {
-            $salidas = $item->documents->where('type', 'salida')->sortByDesc('created_at');
-            $entradas = $item->documents->where('type', 'entrada')->sortByDesc('created_at');
-
-            foreach ($salidas as $doc) {
-                $p = storage_path('app/public/' . $doc->file_path);
-                if (file_exists($p)) {
-                    $pdfPaths[] = $p;
+        // Usar paths pasados desde el controlador (más confiable)
+        if (!empty($this->documentosAdjuntar)) {
+            foreach ($this->documentosAdjuntar as $path) {
+                if (file_exists($path)) {
+                    $pdfPaths[] = $path;
                 } else {
-                    Log::warning("[Expediente Final] Salida faltante: {$p}");
+                    Log::warning("[Expediente Final] Path faltante (del controlador): {$path}");
                 }
             }
-            foreach ($entradas as $doc) {
-                $p = storage_path('app/public/' . $doc->file_path);
-                if (file_exists($p)) {
-                    $pdfPaths[] = $p;
-                } else {
-                    Log::warning("[Expediente Final] Entrada faltante: {$p}");
+        } else {
+            // Fallback: leer desde la BD
+            $agreement->load('roadmapItems.documents');
+            $items = $agreement->roadmapItems->reject(function($i) {
+                return strtolower(trim($i->area_name)) === 'rectorado';
+            })->sortByDesc(function($item) {
+                $latest = $item->documents->sortByDesc('created_at')->first();
+                return $latest ? $latest->created_at : $item->created_at;
+            });
+
+            foreach ($items as $item) {
+                $salidas = $item->documents->where('type', 'salida')->sortByDesc('created_at');
+                $entradas = $item->documents->where('type', 'entrada')->sortByDesc('created_at');
+
+                foreach ($salidas as $doc) {
+                    $p = storage_path('app/public/' . $doc->file_path);
+                    if (file_exists($p)) {
+                        $pdfPaths[] = $p;
+                    } else {
+                        Log::warning("[Expediente Final] Salida faltante (fallback): {$p}");
+                    }
+                }
+                foreach ($entradas as $doc) {
+                    $p = storage_path('app/public/' . $doc->file_path);
+                    if (file_exists($p)) {
+                        $pdfPaths[] = $p;
+                    } else {
+                        Log::warning("[Expediente Final] Entrada faltante (fallback): {$p}");
+                    }
                 }
             }
         }
@@ -174,6 +193,8 @@ class OficioGeneratorService
                 $inputFiles .= ' ' . escapeshellarg($pdfPath);
             }
 
+            Log::info("[Expediente Final] Fusionando " . (count($pdfPaths) + 1) . " PDFs con Ghostscript");
+
             $cmd = sprintf(
                 'gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dCompatibilityLevel=1.4 -sOutputFile=%s %s 2>&1',
                 escapeshellarg($tempMerged),
@@ -191,10 +212,11 @@ class OficioGeneratorService
                 throw new \RuntimeException("El archivo fusionado está vacío o no se generó.");
             }
 
+            $mergedSize = filesize($tempMerged);
             copy($tempMerged, $basePdfPath);
             unlink($tempMerged);
 
-            Log::info("[Expediente Final] Fusionado correctamente con Ghostscript: {$basePdfPath}");
+            Log::info("[Expediente Final] Fusionado correctamente con Ghostscript: {$basePdfPath} ({$mergedSize} bytes, " . (count($pdfPaths) + 1) . " PDFs)");
 
         } catch (\Exception $e) {
             Log::error("[Expediente Final] Error en fusión Ghostscript: " . $e->getMessage());
