@@ -148,22 +148,14 @@ class OficioGeneratorService
             $items = $agreement->roadmapItems->reject(function($i) {
                 return strtolower(trim($i->area_name)) === 'rectorado';
             })->sortByDesc(function($item) {
-                $latest = $item->documents->sortByDesc('created_at')->first();
-                return $latest ? $latest->created_at : $item->created_at;
+                $salida = $item->documents->where('type', 'salida')->sortByDesc('created_at')->first();
+                return $salida ? $salida->created_at : $item->created_at;
             });
 
             foreach ($items as $item) {
                 $salidas = $item->documents->where('type', 'salida')->sortByDesc('created_at');
                 $entradas = $item->documents->where('type', 'entrada')->sortByDesc('created_at');
 
-                foreach ($salidas as $doc) {
-                    $p = storage_path('app/public/' . $doc->file_path);
-                    if (file_exists($p)) {
-                        $pdfPaths[] = $p;
-                    } else {
-                        Log::warning("[Expediente Final] Salida faltante (fallback): {$p}");
-                    }
-                }
                 foreach ($entradas as $doc) {
                     $p = storage_path('app/public/' . $doc->file_path);
                     if (file_exists($p)) {
@@ -172,12 +164,20 @@ class OficioGeneratorService
                         Log::warning("[Expediente Final] Entrada faltante (fallback): {$p}");
                     }
                 }
+                foreach ($salidas as $doc) {
+                    $p = storage_path('app/public/' . $doc->file_path);
+                    if (file_exists($p)) {
+                        $pdfPaths[] = $p;
+                    } else {
+                        Log::warning("[Expediente Final] Salida faltante (fallback): {$p}");
+                    }
+                }
             }
         }
 
         if (empty($pdfPaths)) {
             Log::warning("[Expediente Final] No hay documentos adjuntos para fusionar.");
-            return;
+            throw new \Exception("ERROR: No se encontraron documentos adjuntos (entradas/salidas) físicamente en el servidor para unir. Revise si los archivos de las áreas previas existen o han sido borrados.");
         }
 
         try {
@@ -220,6 +220,7 @@ class OficioGeneratorService
 
         } catch (\Exception $e) {
             Log::error("[Expediente Final] Error en fusión Ghostscript: " . $e->getMessage());
+            throw new \Exception("ERROR AL UNIR PDFs: " . $e->getMessage() . " --- CONTACTE A SOPORTE O REVISE SI GHOSTSCRIPT ESTA INSTALADO.");
         }
     }
 
