@@ -44,7 +44,7 @@
                       }
                   }
               }"
-              x-on:submit="submitting = true">
+              x-on:submit="if(submitting) { $event.preventDefault(); return; } submitting = true;">
             @csrf
 
             @foreach($oficioItems as $idx => $item)

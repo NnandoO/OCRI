@@ -56,7 +56,7 @@
 
                 <div class="mt-6 flex justify-end gap-3">
                     <flux:button href="{{ route('agreements.show', $oficio->agreement_id) }}" variant="outline">Cancelar</flux:button>
-                    <flux:button type="submit" variant="primary" icon="document-text" class="bg-green-600 hover:bg-green-700 text-white border-none" onclick="prepareSubmit()">Confirmar y Generar PDF</flux:button>
+                    <flux:button type="submit" variant="primary" icon="document-text" class="bg-green-600 hover:bg-green-700 text-white border-none" onclick="prepareSubmit(event)">Confirmar y Generar PDF</flux:button>
                 </div>
             </form>
         </flux:card>
@@ -74,9 +74,22 @@
             theme: 'snow'
         });
 
-        function prepareSubmit() {
+        var isSubmitting = false;
+
+        function prepareSubmit(event) {
+            if (isSubmitting) {
+                event.preventDefault();
+                return false;
+            }
+            isSubmitting = true;
             // Extraer el HTML del editor de Quill y ponerlo en el input hidden
             document.getElementById('body_html_input').value = quill.root.innerHTML;
+            
+            // Cambiar el texto del botón
+            const btn = event.currentTarget;
+            btn.innerHTML = 'Generando...';
+            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.7';
         }
     </script>
 </x-layouts::app>

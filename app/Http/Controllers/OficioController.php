@@ -130,21 +130,26 @@ class OficioController extends Controller
             $referenciaText = "No se registran opiniones previas.";
         }
 
-        // Pasar los paths al servicio para la fusión
-        $this->oficioGenerator->setDocumentosAdjuntar($documentosAdjuntar);
+        // Construir el body HTML
+        $bodyHtml = '<p>Señor(a):<br><strong>' . e($validated['directed_to']) . '</strong><br>Presente.-</p>';
+        $bodyHtml .= '<p><strong>ASUNTO:</strong> SOLICITUD DE SUSCRIPCIÓN DEL CONVENIO: ' . e($agreement->name) . '</p>';
+        $bodyHtml .= '<p><strong>Referencia:</strong> ' . e($referenciaText) . '</p>';
+        $bodyHtml .= '<p style="text-align: justify;">Tengo el agrado de dirigirme a usted, con la finalidad de solicitar la SUSCRIPCIÓN del Convenio: <strong>' . e($agreement->name) . '</strong>, el cual ha sido debidamente revisado y cuenta con las opiniones técnicas favorables de las áreas correspondientes.</p>';
+        $bodyHtml .= '<p style="text-align: justify;">Se adjunta el expediente completo con el historial de opiniones técnicas emitidas, para su evaluación y fines pertinentes.</p>';
+        $bodyHtml .= '<p style="text-align: justify;">Sin otro particular, hago propicia la oportunidad para expresarle las muestras de mi especial consideración y estima personal.</p>';
+        $bodyHtml .= '<p>Atentamente,</p>';
 
         $oficio = $this->oficioGenerator->generateExpedienteFinal(
             $agreement,
             $validated['directed_to'],
             $validated['oficio_number'],
             $referenciaText,
-            $documentosAdjuntar
+            $bodyHtml
         );
 
-        $this->oficioGenerator->renderAndSavePdf($oficio);
-
-        return redirect()->route('agreements.show', $agreement->id)
-            ->with('status', 'Expediente final y oficio a Rectorado generados correctamente.');
+        // Ya no generamos el PDF automáticamente, redirigimos al editor
+        return redirect()->route('oficios.edit', $oficio->id)
+            ->with('status', 'Borrador de Expediente Final creado. Por favor revise y confirme.');
     }
 
     public function download(Oficio $oficio)

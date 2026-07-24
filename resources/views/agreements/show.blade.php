@@ -565,7 +565,7 @@
 
         <form action="{{ route('agreements.expediente-final', $agreement->id) }}" method="POST" class="space-y-5"
               x-data="{ submitting: false }"
-              x-on:submit="submitting = true">
+              x-on:submit="if(submitting) { $event.preventDefault(); return; } submitting = true;">
             @csrf
             <flux:field>
                 <flux:label class="font-bold">A quién va dirigido</flux:label>
