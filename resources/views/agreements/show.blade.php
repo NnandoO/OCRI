@@ -348,7 +348,7 @@
                                         </flux:modal.trigger>
                                     @endif
                                     @if($expedienteRectoradoDoc && \Illuminate\Support\Facades\Storage::disk('public')->exists($expedienteRectoradoDoc->file_path))
-                                        <flux:button as="a" href="{{ asset('storage/' . str_replace('\\', '/', $expedienteRectoradoDoc->file_path)) }}" target="_blank" variant="primary" icon="arrow-down-tray" class="bg-green-600 hover:bg-green-700 text-white border-none shrink-0">
+                                        <flux:button as="a" href="{{ asset('storage/' . str_replace('\\', '/', $expedienteRectoradoDoc->file_path)) }}?v={{ time() }}" target="_blank" variant="primary" icon="arrow-down-tray" class="bg-green-600 hover:bg-green-700 text-white border-none shrink-0">
                                             Descargar
                                         </flux:button>
                                     @endif
