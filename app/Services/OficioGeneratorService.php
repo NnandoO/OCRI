@@ -156,20 +156,20 @@ class OficioGeneratorService
                 $salidas = $item->documents->where('type', 'salida')->sortByDesc('created_at');
                 $entradas = $item->documents->where('type', 'entrada')->sortByDesc('created_at');
 
-                foreach ($entradas as $doc) {
-                    $p = storage_path('app/public/' . $doc->file_path);
-                    if (file_exists($p)) {
-                        $pdfPaths[] = $p;
-                    } else {
-                        Log::warning("[Expediente Final] Entrada faltante (fallback): {$p}");
-                    }
-                }
                 foreach ($salidas as $doc) {
                     $p = storage_path('app/public/' . $doc->file_path);
                     if (file_exists($p)) {
                         $pdfPaths[] = $p;
                     } else {
                         Log::warning("[Expediente Final] Salida faltante (fallback): {$p}");
+                    }
+                }
+                foreach ($entradas as $doc) {
+                    $p = storage_path('app/public/' . $doc->file_path);
+                    if (file_exists($p)) {
+                        $pdfPaths[] = $p;
+                    } else {
+                        Log::warning("[Expediente Final] Entrada faltante (fallback): {$p}");
                     }
                 }
             }

@@ -105,7 +105,7 @@ class OficioController extends Controller
             $entradas = $item->documents->where('type', 'entrada')->sortByDesc('created_at');
             $salidas = $item->documents->where('type', 'salida')->sortByDesc('created_at');
 
-            foreach ($entradas as $doc) {
+            foreach ($salidas as $doc) {
                 $referencias[] = $sinPdf($doc->original_name);
                 $p = storage_path('app/public/' . $doc->file_path);
                 if (file_exists($p)) {
@@ -114,7 +114,7 @@ class OficioController extends Controller
                     \Illuminate\Support\Facades\Log::warning("[Expediente Final Controller] Archivo faltante: {$p}");
                 }
             }
-            foreach ($salidas as $doc) {
+            foreach ($entradas as $doc) {
                 $referencias[] = $sinPdf($doc->original_name);
                 $p = storage_path('app/public/' . $doc->file_path);
                 if (file_exists($p)) {
