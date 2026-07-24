@@ -138,7 +138,6 @@ class OficioController extends Controller
         $bodyHtml .= '<p style="text-align: justify;">Se adjunta el expediente completo con el historial de opiniones técnicas emitidas, para su evaluación y fines pertinentes.</p>';
         $bodyHtml .= '<p style="text-align: justify;">Sin otro particular, hago propicia la oportunidad para expresarle las muestras de mi especial consideración y estima personal.</p>';
         $bodyHtml .= '<p>Atentamente,</p>';
-
         $oficio = $this->oficioGenerator->generateExpedienteFinal(
             $agreement,
             $validated['directed_to'],
