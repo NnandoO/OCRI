@@ -118,13 +118,15 @@ class OficioController extends Controller
             $referenciaText = "No se registran opiniones previas.";
         }
 
-        $this->oficioGenerator->generateExpedienteFinal(
+        $oficio = $this->oficioGenerator->generateExpedienteFinal(
             $agreement,
             $validated['directed_to'],
             $validated['oficio_number'],
             $referenciaText,
             $documentosAdjuntar
         );
+
+        $this->oficioGenerator->renderAndSavePdf($oficio);
 
         return redirect()->route('agreements.show', $agreement->id)
             ->with('status', 'Expediente final y oficio a Rectorado generados correctamente.');
