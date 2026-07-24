@@ -101,7 +101,7 @@ class AgreementController extends Controller
             'agreement_type_id' => 'required|exists:agreement_types,id',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
-            'document' => 'nullable|file|mimes:pdf|max:10240',
+            'document' => 'nullable|file|mimes:pdf',
         ]);
 
         $agreement->update([
@@ -117,7 +117,10 @@ class AgreementController extends Controller
         if ($request->hasFile('document')) {
             $file = $request->file('document');
             // Todo apunta a resoluciones
-            $path = $file->store('resoluciones', 'public');
+                        $path = $file->store('resoluciones', 'public');
+            if (strtolower($file->getClientOriginalExtension()) === 'pdf') {
+                app(\App\Services\PdfCompressorService::class)->compressPdf(storage_path('app/public/' . $path));
+            }
             
             $agreement->documents()->create([
                 'name' => 'Expediente Consolidado Final',
@@ -168,8 +171,8 @@ class AgreementController extends Controller
             'resolution_number' => 'nullable|string|max:100|unique:agreements,resolution_number',
             'institution_id' => 'required|exists:institutions,id',
             'agreement_type_id' => 'required|exists:agreement_types,id',
-            'document' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
-            'dictamen' => 'nullable|file|mimes:pdf|max:10240',
+            'document' => 'nullable|file|mimes:pdf,doc,docx',
+            'dictamen' => 'nullable|file|mimes:pdf',
         ];
 
         if ($request->hasFile('document')) {
@@ -182,7 +185,10 @@ class AgreementController extends Controller
 
         if ($request->hasFile('dictamen')) {
             $file = $request->file('dictamen');
-            $path = $file->store('resoluciones', 'public');
+                        $path = $file->store('resoluciones', 'public');
+            if (strtolower($file->getClientOriginalExtension()) === 'pdf') {
+                app(\App\Services\PdfCompressorService::class)->compressPdf(storage_path('app/public/' . $path));
+            }
             $validated['dictamen_path'] = $path;
             $validated['dictamen_original_name'] = $file->getClientOriginalName();
         }
@@ -191,7 +197,10 @@ class AgreementController extends Controller
 
         if ($request->hasFile('document')) {
             $file = $request->file('document');
-            $path = $file->store('resoluciones', 'public');
+                        $path = $file->store('resoluciones', 'public');
+            if (strtolower($file->getClientOriginalExtension()) === 'pdf') {
+                app(\App\Services\PdfCompressorService::class)->compressPdf(storage_path('app/public/' . $path));
+            }
             
             $agreement->documents()->create([
                 'name' => 'Doc - ' . ($agreement->resolution_number ?? $agreement->title),
@@ -219,7 +228,7 @@ class AgreementController extends Controller
             'signature_date' => 'required|date',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
-            'final_document' => 'nullable|file|mimes:pdf|max:10240', // <-- NUEVO: Validar el PDF
+            'final_document' => 'nullable|file|mimes:pdf', // <-- NUEVO: Validar el PDF
         ]);
 
         $agreement = Agreement::findOrFail($id);
@@ -234,7 +243,10 @@ class AgreementController extends Controller
         // <-- NUEVO: Si se sube el convenio final, lo guardamos en el acervo
         if ($request->hasFile('final_document')) {
             $file = $request->file('final_document');
-            $path = $file->store('resoluciones', 'public');
+                        $path = $file->store('resoluciones', 'public');
+            if (strtolower($file->getClientOriginalExtension()) === 'pdf') {
+                app(\App\Services\PdfCompressorService::class)->compressPdf(storage_path('app/public/' . $path));
+            }
             
             $agreement->documents()->create([
                 'name' => 'Convenio Firmado',
@@ -373,7 +385,7 @@ class AgreementController extends Controller
                 ->withErrors(['documents' => 'No se recibió ningún archivo.']);
         }
 
-        $request->validate(['documents.*' => 'required|mimes:pdf|max:10240']); 
+        $request->validate(['documents.*' => 'required|mimes:pdf']); 
 
         $type = $request->input('type', 'entrada');
         if (!in_array($type, ['entrada', 'salida'])) {
@@ -382,7 +394,10 @@ class AgreementController extends Controller
 
         $count = 0;
         foreach ($files as $file) {
-            $path = $file->store('resoluciones', 'public');
+                        $path = $file->store('resoluciones', 'public');
+            if (strtolower($file->getClientOriginalExtension()) === 'pdf') {
+                app(\App\Services\PdfCompressorService::class)->compressPdf(storage_path('app/public/' . $path));
+            }
             
             $item->documents()->create([
                 'file_path' => $path,
@@ -399,13 +414,16 @@ class AgreementController extends Controller
     public function uploadMainDocument(Request $request, Agreement $agreement)
     {
         $request->validate([
-            'document' => 'required|mimes:pdf|max:10240',
+            'document' => 'required|mimes:pdf',
         ]);
 
         if ($request->hasFile('document')) {
             $file = $request->file('document');
             // Guardamos directamente en la carpeta resoluciones como todo lo demás
-            $path = $file->store('resoluciones', 'public');
+                        $path = $file->store('resoluciones', 'public');
+            if (strtolower($file->getClientOriginalExtension()) === 'pdf') {
+                app(\App\Services\PdfCompressorService::class)->compressPdf(storage_path('app/public/' . $path));
+            }
             
             $agreement->documents()->create([
                 'name' => 'Convenio Firmado',

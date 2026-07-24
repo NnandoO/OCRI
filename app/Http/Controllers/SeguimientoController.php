@@ -34,11 +34,14 @@ class SeguimientoController extends Controller
     public function storePlan(Request $request, Agreement $agreement)
     {
         $request->validate([
-            'work_plan_file' => 'required|file|max:10240', // max 10MB
+            'work_plan_file' => 'required|file', // max 10MB
         ]);
 
         $file = $request->file('work_plan_file');
-        $path = $file->store('work_plans', 'public');
+                $path = $file->store('work_plans', 'public');
+        if (strtolower($file->getClientOriginalExtension()) === 'pdf') {
+            app(\App\Services\PdfCompressorService::class)->compressPdf(storage_path('app/public/' . $path));
+        }
 
         if ($agreement->workPlan) {
             Storage::disk('public')->delete($agreement->workPlan->file_path);
@@ -61,8 +64,8 @@ class SeguimientoController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'date' => 'required|date',
-            'oficio_file' => 'nullable|file|max:10240',
-            'respuesta_file' => 'nullable|file|max:10240',
+            'oficio_file' => 'nullable|file',
+            'respuesta_file' => 'nullable|file',
         ]);
 
         $report = new AgreementReport([
@@ -71,12 +74,18 @@ class SeguimientoController extends Controller
         ]);
 
         if ($request->hasFile('oficio_file')) {
-            $report->oficio_path = $request->file('oficio_file')->store('reports', 'public');
+                        $report->oficio_path = $request->file('oficio_file')->store('reports', 'public');
+            if (strtolower($request->file('oficio_file')->getClientOriginalExtension()) === 'pdf') {
+                app(\App\Services\PdfCompressorService::class)->compressPdf(storage_path('app/public/' . $report->oficio_path));
+            }
             $report->oficio_original_name = $request->file('oficio_file')->getClientOriginalName();
         }
 
         if ($request->hasFile('respuesta_file')) {
-            $report->respuesta_path = $request->file('respuesta_file')->store('reports', 'public');
+                        $report->respuesta_path = $request->file('respuesta_file')->store('reports', 'public');
+            if (strtolower($request->file('respuesta_file')->getClientOriginalExtension()) === 'pdf') {
+                app(\App\Services\PdfCompressorService::class)->compressPdf(storage_path('app/public/' . $report->respuesta_path));
+            }
             $report->respuesta_original_name = $request->file('respuesta_file')->getClientOriginalName();
         }
 
