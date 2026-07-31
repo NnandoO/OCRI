@@ -91,16 +91,13 @@
                     <div class="space-y-6">
                         <flux:field class="space-y-2">
                             <flux:label class="font-bold">Institución Aliada</flux:label>
-                            <flux:select name="institution_id" searchable placeholder="Buscar institución..." required class="dark:bg-zinc-800/50">
-                                @foreach($institutions as $institution)
-                                    <flux:select.option 
-                                        value="{{ $institution->id }}" 
-                                        :selected="old('institution_id', $agreement->institution_id) == $institution->id"
-                                    >
-                                        {{ $institution->name }}
-                                    </flux:select.option>
-                                @endforeach
-                            </flux:select>
+                            @include('agreements.partials.institution-combobox', [
+                                'institutions' => $institutions,
+                                'selectedInstitutionId' => old('institution_id', $agreement->institution_id),
+                                'selectedInstitutionName' => old('institution_id')
+                                    ? (optional($institutions->firstWhere('id', (int) old('institution_id')))->name ?? '')
+                                    : ($agreement->institution->name ?? ''),
+                            ])
                         </flux:field>
                         <flux:field class="space-y-2">
                             <flux:label class="font-bold">Tipo de Convenio</flux:label>

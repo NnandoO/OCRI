@@ -78,11 +78,11 @@
                             <flux:label class="font-bold">Institución Aliada</flux:label>
                             <div class="flex items-start gap-2 mt-2">
                                 <div class="flex-1">
-                                    <flux:select name="institution_id" id="institution_select" searchable placeholder="Buscar institución..." required class="dark:bg-zinc-800/50">
-                                        @foreach($institutions as $institution)
-                                            <flux:select.option value="{{ $institution->id }}">{{ $institution->name }}</flux:select.option>
-                                        @endforeach
-                                    </flux:select>
+                                    @include('agreements.partials.institution-combobox', [
+                                        'institutions' => $institutions,
+                                        'selectedInstitutionId' => '',
+                                        'selectedInstitutionName' => '',
+                                    ])
                                 </div>
                                 <flux:modal.trigger name="create-institution-modal">
                                     <flux:button variant="primary" icon="plus" class="px-3" title="Registrar nueva institución" />
@@ -277,9 +277,7 @@
 
                 const data = await response.json();
                 
-                const select = document.getElementById('institution_select');
-                const newOption = new Option(data.name, data.id, true, true);
-                select.add(newOption);
+                window.dispatchEvent(new CustomEvent('institution-created', { detail: data }));
                 
                 document.getElementById('quick-institution-form').reset();
                 document.getElementById('new_inst_country_input').value = ''; 
