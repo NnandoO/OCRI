@@ -109,7 +109,6 @@
                 </td>
             </tr>
         </table>
-        <div class="separator"></div>
     </header>
 
     <footer>
